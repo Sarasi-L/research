@@ -1,0 +1,29 @@
+# Ignore audio datasets
+
+*.mp3
+*.wav
+*.flac
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Conda environments
+env/
+venv/
+
+
+# IDE files
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+
+# Logs
+*.log
+
+
+# Node
+node_modules/
+
