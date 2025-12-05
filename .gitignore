@@ -27,3 +27,6 @@ venv/
 # Node
 node_modules/
 
+models/
+
+
