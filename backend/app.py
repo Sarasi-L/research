@@ -1,30 +1,44 @@
 # backend/app.py
-import os
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from routers.upload import router as upload_router
 from pathlib import Path
-from preprocess import preprocess_audio
-from instrument_separate import separate_instruments
-from preprocess_separated import generate_spectrogram
 
-try:
-    # ===== Paths =====
-    input_file = Path("audio_input/mixed_song.wav")
-    preprocessed_file = Path("preprocessed/mixed_song.wav")
-    separated_dir = Path("separated")
-    spectrogram_dir = Path("preprocessed/spectrograms")
-    spectrogram_dir.mkdir(parents=True, exist_ok=True)
+app = FastAPI(title="Music Notation ML Pipeline")
 
-    print("[INFO] Step 1: Preprocessing Mixed Audio")
-    preprocess_audio(str(input_file), str(preprocessed_file))
+# CORS middleware - allow frontend to access backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
-    print("[INFO] Step 2: Instrument Separation")
-    separate_instruments(str(preprocessed_file), str(separated_dir))
+# FIXED: Mount the STEMS directory, not temp!
+BASE_DIR = Path(__file__).resolve().parent
+STEMS_DIR = BASE_DIR / "stems"
+UPLOAD_DIR = BASE_DIR / "uploads"
 
-    print("[INFO] Step 3: Generate Spectrograms for Each Instrument")
-    for instrument_file in separated_dir.glob("*.wav"):
-        out_file = spectrogram_dir / f"{instrument_file.stem}.png"
-        generate_spectrogram(str(instrument_file), str(out_file))
+# Create directories if they don't exist
+STEMS_DIR.mkdir(parents=True, exist_ok=True)
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-    print("[SUCCESS] All steps completed successfully!")
+print(f"[INFO] Stems directory: {STEMS_DIR.absolute()}")
+print(f"[INFO] Stems directory exists: {STEMS_DIR.exists()}")
+print(f"[INFO] Uploads directory: {UPLOAD_DIR.absolute()}")
 
-except Exception as e:
-    print(f"[ERROR] Pipeline failed: {e}")
+# Mount stems directory so frontend can access the audio files
+app.mount("/stems", StaticFiles(directory=str(STEMS_DIR)), name="stems")
+
+# Include router
+app.include_router(upload_router)
+
+@app.get("/")
+async def root():
+    return {"message": "Music Separator API is running"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
