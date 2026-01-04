@@ -2,7 +2,7 @@ from backend.services.monophonic.note_naming import apply_key_aware_naming
 from backend.services.monophonic.note_quantization import quantize_notes
 from backend.services.monophonic.validation.validate_tempo import validate_tempo
 from backend.services.monophonic.validation.key_validation import validate_key
-from backend.services.monophonic.preprocess_audio import preprocess_audio
+from backend.services.monophonic.preprocess_monophonic_audio import preprocess_audio
 from backend.services.monophonic.pitch_extraction import extract_pitch
 from backend.services.monophonic.note_segmentation import frames_to_notes
 

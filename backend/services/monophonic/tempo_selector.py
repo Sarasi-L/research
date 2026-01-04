@@ -1,3 +1,14 @@
+# backend/services/monophonic/tempo_selector.py
+
+def snap_tempo(tempo):
+    """
+    Snap estimated tempo to nearest musically common BPM.
+    This stabilizes notation and avoids extreme values.
+    """
+    COMMON_TEMPOS = [60, 72, 84, 96, 108, 120, 132, 144, 168, 176]
+    return min(COMMON_TEMPOS, key=lambda t: abs(t - tempo))
+
+
 def select_final_tempo(audio_tempo: dict, note_tempo: dict) -> dict:
     """
     Decide final tempo for monophonic Western notation
@@ -9,16 +20,18 @@ def select_final_tempo(audio_tempo: dict, note_tempo: dict) -> dict:
         and note_tempo.get("tempo") is not None
         and note_tempo.get("confidence", 0) >= 0.6
     ):
+        snapped = snap_tempo(note_tempo["tempo"])
         return {
-            "tempo": note_tempo["tempo"],
+            "tempo": snapped,
             "confidence": note_tempo["confidence"],
             "source": "note_based"
         }
 
     # 2️⃣ Fallback to beat-based tempo
     if audio_tempo and audio_tempo.get("tempo") is not None:
+        snapped = snap_tempo(audio_tempo["tempo"])
         return {
-            "tempo": audio_tempo["tempo"],
+            "tempo": snapped,
             "confidence": 0.6,
             "source": "beat_based"
         }

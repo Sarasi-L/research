@@ -1,4 +1,4 @@
-from backend.services.monophonic.preprocess_audio import preprocess_audio
+from backend.services.monophonic.preprocess_monophonic_audio import preprocess_audio
 from backend.services.monophonic.pitch_extraction import extract_pitch
 
 AUDIO_PATH = "mix7.mp3"

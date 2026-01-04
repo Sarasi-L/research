@@ -1,6 +1,6 @@
 # test_validate_notes.py
 
-from backend.services.monophonic.preprocess_audio import preprocess_audio
+from backend.services.monophonic.preprocess_monophonic_audio import preprocess_audio
 from backend.services.monophonic.validation.validate_notes import validate_note_segmentation
 
 if __name__ == "__main__":

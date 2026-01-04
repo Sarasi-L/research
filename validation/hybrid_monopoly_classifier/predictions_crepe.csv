@@ -1,0 +1,126 @@
+filename,true_label,predicted_label,confidence
+flute_01.wav,mono,monophonic,0.9
+flute_02.wav,mono,monophonic,0.9
+flute_03.wav,mono,monophonic,0.9
+flute_04.wav,mono,monophonic,0.9
+flute_05.wav,mono,monophonic,0.9
+flute_06.wav,mono,monophonic,0.9
+flute_07.wav,mono,monophonic,0.9
+flute_08.wav,mono,monophonic,0.9
+flute_09.wav,mono,monophonic,0.9
+flute_10.wav,mono,monophonic,0.9
+guitar_01.wav,mono,polyphonic,0.9
+guitar_02.wav,mono,monophonic,0.75
+guitar_03.wav,mono,monophonic,0.75
+guitar_04.wav,mono,monophonic,0.9
+guitar_05.wav,mono,monophonic,0.75
+guitar_06.wav,mono,monophonic,0.75
+guitar_07.wav,mono,polyphonic,0.9
+guitar_08.wav,mono,monophonic,0.9
+guitar_09.wav,mono,monophonic,0.75
+guitar_10.wav,mono,monophonic,0.75
+keyboard_01.wav,mono,monophonic,0.75
+keyboard_02.wav,mono,monophonic,0.9
+keyboard_03.wav,mono,monophonic,0.75
+keyboard_04.wav,mono,monophonic,0.75
+keyboard_05.wav,mono,monophonic,0.9
+keyboard_06.wav,mono,monophonic,0.9
+keyboard_07.wav,mono,monophonic,0.9
+keyboard_08.wav,mono,monophonic,0.9
+keyboard_09.wav,mono,polyphonic,0.9
+keyboard_10.wav,mono,monophonic,0.75
+organ_01.wav,mono,monophonic,0.9
+organ_02.wav,mono,monophonic,0.75
+organ_03.wav,mono,monophonic,0.75
+organ_04.wav,mono,monophonic,0.9
+organ_05.wav,mono,monophonic,0.75
+organ_06.wav,mono,monophonic,0.75
+organ_07.wav,mono,monophonic,0.9
+organ_08.wav,mono,monophonic,0.75
+organ_09.wav,mono,monophonic,0.75
+organ_10.wav,mono,monophonic,0.75
+string_01.wav,mono,monophonic,0.9
+string_02.wav,mono,monophonic,0.9
+string_03.wav,mono,monophonic,0.9
+string_04.wav,mono,monophonic,0.9
+string_05.wav,mono,monophonic,0.75
+string_06.wav,mono,monophonic,0.9
+string_07.wav,mono,polyphonic,0.9
+string_08.wav,mono,monophonic,0.9
+string_09.wav,mono,monophonic,0.75
+string_10.wav,mono,monophonic,0.9
+0050_10CC___I_M_NOT_IN_LOVE-1.wav,poly,polyphonic,0.9
+0050_10CC___I_M_NOT_IN_LOVE-15.wav,poly,polyphonic,0.9
+0050_10CC___I_M_NOT_IN_LOVE-4.wav,poly,polyphonic,0.9
+0050_10CC___I_M_NOT_IN_LOVE-5.wav,poly,polyphonic,0.75
+0050_10CC___I_M_NOT_IN_LOVE-6.wav,poly,polyphonic,0.9
+0050_10CC___I_M_NOT_IN_LOVE-8.wav,poly,polyphonic,0.9
+032  Fats Navarro - Boperation-12.wav,poly,monophonic,0.75
+032  Fats Navarro - Boperation-14.wav,poly,monophonic,0.75
+032  Fats Navarro - Boperation-2.wav,poly,polyphonic,0.9
+032  Fats Navarro - Boperation-6.wav,poly,monophonic,0.75
+032  Fats Navarro - Boperation-8.wav,poly,polyphonic,0.9
+101-eric_clapton-i_feel_free-1.wav,poly,polyphonic,0.65
+101-eric_clapton-i_feel_free-10.wav,poly,polyphonic,0.9
+101-eric_clapton-i_feel_free-9.wav,poly,polyphonic,0.9
+102 - killing joke - love like blood-5.wav,poly,polyphonic,0.9
+102 - killing joke - love like blood-6.wav,poly,polyphonic,0.9
+102 - killing joke - love like blood-8.wav,poly,polyphonic,0.9
+102 - killing joke - love like blood-9.wav,poly,polyphonic,0.75
+25 - Stuck On You-1.wav,poly,polyphonic,0.9
+25 - Stuck On You-5.wav,poly,polyphonic,0.9
+25 - Stuck On You-7.wav,poly,polyphonic,0.9
+30 - Norbert Kraft - Julia Florida - S04E12-1.wav,poly,monophonic,0.75
+30 - Norbert Kraft - Julia Florida - S04E12-3.wav,poly,monophonic,0.75
+30 - Norbert Kraft - Julia Florida - S04E12-6.wav,poly,monophonic,0.75
+30 - Norbert Kraft - Julia Florida - S04E12-9.wav,poly,monophonic,0.75
+edgar froese - epsilon in malaysian pale 1-43.wav,poly,monophonic,0.75
+edgar froese - epsilon in malaysian pale 1-47.wav,poly,polyphonic,0.9
+edgar froese - epsilon in malaysian pale 1-50.wav,poly,polyphonic,0.65
+Faith No More - Stripsearch-14.wav,poly,polyphonic,0.9
+Faith No More - Stripsearch-16.wav,poly,polyphonic,0.9
+Faith No More - Stripsearch-4.wav,poly,polyphonic,0.9
+Faith No More - Stripsearch-9.wav,poly,polyphonic,0.9
+Fingerstyle Guitar Magazine #47 - 01 - Liona Boyd - Carretera Libertad-10.wav,poly,polyphonic,0.9
+Fingerstyle Guitar Magazine #47 - 01 - Liona Boyd - Carretera Libertad-2.wav,poly,polyphonic,0.65
+Fingerstyle Guitar Magazine #47 - 01 - Liona Boyd - Carretera Libertad-7.wav,poly,polyphonic,0.65
+Fingerstyle Guitar Magazine #47 - 01 - Liona Boyd - Carretera Libertad-8.wav,poly,polyphonic,0.9
+Four Tet - Love Cry-10.wav,poly,polyphonic,0.9
+Four Tet - Love Cry-18.wav,poly,polyphonic,0.9
+Four Tet - Love Cry-22.wav,poly,polyphonic,0.9
+Four Tet - Love Cry-23.wav,poly,polyphonic,0.9
+Four Tet - Love Cry-24.wav,poly,polyphonic,0.9
+Four Tet - Love Cry-30.wav,poly,polyphonic,0.9
+Georgia On My Mind-12.wav,poly,monophonic,0.75
+Georgia On My Mind-3.wav,poly,monophonic,0.75
+Georgia On My Mind-4.wav,poly,polyphonic,0.9
+Georgia On My Mind-6.wav,poly,monophonic,0.75
+Gesualdo - Io tacero-10.wav,poly,monophonic,0.75
+Gesualdo - Io tacero-5.wav,poly,monophonic,0.75
+Gesualdo - Io tacero-7.wav,poly,polyphonic,0.65
+Gesualdo - Io tacero-9.wav,poly,monophonic,0.75
+134769__carrik_caser__guitar-lead-1.wav,ambiguous,polyphonic,0.75
+15832__krimzon__rargh_organ_esus4.wav,ambiguous,polyphonic,0.9
+214760__deleted_user_2906614__simple_dreamy_pad_r1_session_2014-01-20.flac,ambiguous,polyphonic,0.65
+215672__timbre__before-after-remix-of-206402__pablo-project__flute-single-note-e3-p.flac,ambiguous,monophonic,0.9
+218073__billysynth__loud_drone.wav,ambiguous,polyphonic,0.9
+28304__herbertboland__magnussmallelectrwindorgan.wav,ambiguous,polyphonic,0.9
+35808__erh__flute-trill-a.wav,ambiguous,monophonic,0.75
+69492__deleted_user_984625__123bpmdrone.wav,ambiguous,monophonic,0.9
+85166__timbre__75315_oymaldonado_bluesy_rock_guitar3_enveloped_reverbed.wav,ambiguous,monophonic,0.75
+flute_B4_15_mezzo-forte_normal.mp3,ambiguous,monophonic,0.9
+flute_G4_15_piano_normal.mp3,ambiguous,monophonic,0.9
+organ_electronic_000-054-100.wav,ambiguous,monophonic,0.75
+organ_electronic_000-087-127.wav,ambiguous,monophonic,0.9
+organ_electronic_000-094-025.wav,ambiguous,polyphonic,0.9
+organ_electronic_008-043-050.wav,ambiguous,monophonic,0.9
+organ_electronic_035-039-127.wav,ambiguous,monophonic,0.75
+synth_lead_synthetic_000-090-127.wav,ambiguous,monophonic,0.75
+synth_lead_synthetic_002-009-050.wav,ambiguous,polyphonic,0.65
+synth_lead_synthetic_003-084-075.wav,ambiguous,monophonic,0.9
+synth_lead_synthetic_006-046-050.wav,ambiguous,monophonic,0.75
+synth_lead_synthetic_012-089-127.wav,ambiguous,monophonic,0.9
+synth_lead_synthetic_012-103-050.wav,ambiguous,polyphonic,0.9
+synth_lead_synthetic_012-108-100.wav,ambiguous,polyphonic,0.9
+violin_Gs3_phrase_mezzo-piano_arco-detache.mp3,ambiguous,monophonic,0.75
+violin_Gs5_1_forte_con-sord.mp3,ambiguous,monophonic,0.9

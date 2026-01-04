@@ -1,4 +1,4 @@
-from backend.services.monophonic.preprocess_audio import preprocess_audio
+from backend.services.monophonic.preprocess_monophonic_audio import preprocess_audio
 from backend.services.monophonic.pitch_extraction import extract_pitch
 from backend.services.monophonic.note_segmentation import frames_to_notes
 from backend.services.monophonic.note_quantization import quantize_notes
@@ -10,7 +10,7 @@ y, sr = preprocess_audio(audio_file, instrument="flute")
 t, f0, conf = extract_pitch(y, sr)
 notes = frames_to_notes(t, f0, conf)
 
-tempo = 178.21  # use accepted tempo
+tempo = 123.05  # use accepted tempo
 quantized = quantize_notes(notes, tempo)
 
 key_info = detect_key(quantized)

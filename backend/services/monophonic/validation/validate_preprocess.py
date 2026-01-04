@@ -1,7 +1,7 @@
 import librosa
 import numpy as np
 
-from backend.services.monophonic.preprocess_audio import preprocess_audio
+from backend.services.monophonic.preprocess_monophonic_audio import preprocess_audio
 
 
 def validate_preprocessing(raw_path, instrument):

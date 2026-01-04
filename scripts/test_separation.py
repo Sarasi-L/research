@@ -1,6 +1,6 @@
 from pathlib import Path
-from backend.services.preprocess import preprocess_audio
-from backend.services.detect_type import detect_audio_type
+from backend.services.preprocess_stereo_audio import preprocess_audio
+from backend.services.detect_type_crepe import detect_audio_type
 from backend.services.separate_demucs import separate_polyphonic
 
 BASE = Path("backend/temp")

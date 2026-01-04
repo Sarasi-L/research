@@ -2,7 +2,7 @@
 
 import math
 
-# Supported musical durations (in beats)
+# Supported musical durations (in beats), ordered large → small
 NOTE_VALUES = {
     "whole": 4.0,
     "dotted_half": 3.0,
@@ -14,17 +14,37 @@ NOTE_VALUES = {
     "sixteenth": 0.25
 }
 
-def quantize_notes(notes, tempo, tolerance=0.3):
+ALLOWED_DURATIONS = sorted(NOTE_VALUES.values(), reverse=True)
+
+
+def split_into_tied_durations(duration, tolerance=0.08):
     """
-    Convert note durations into musical note values
+    Split a duration into standard note values using ties.
+    Example: 2.23 → [2.0, 0.25]
+    """
+    remaining = duration
+    parts = []
+
+    for d in ALLOWED_DURATIONS:
+        while remaining >= d - tolerance:
+            parts.append(d)
+            remaining -= d
+
+    return parts
+
+
+def quantize_notes(notes, tempo, tolerance=0.15):
+    """
+    Convert note durations into musical note values.
+    Uses tie-splitting when duration does not match exactly.
 
     Args:
         notes: list of {start, end, pitch}
-        tempo: BPM (final accepted tempo)
-        tolerance: allowed snapping error in beats
+        tempo: BPM
+        tolerance: snapping tolerance in beats
 
     Returns:
-        Quantized notes with duration info
+        Quantized notes with tie-aware duration info
     """
 
     quantized = []
@@ -32,8 +52,9 @@ def quantize_notes(notes, tempo, tolerance=0.3):
     for note in notes:
         duration_sec = note["end"] - note["start"]
         beats = (duration_sec * tempo) / 60.0
+        beats = round(beats, 2)
 
-        # Find closest note value with tolerance
+        # Try exact snapping first
         best_match = None
         smallest_error = float("inf")
 
@@ -43,20 +64,61 @@ def quantize_notes(notes, tempo, tolerance=0.3):
                 smallest_error = error
                 best_match = (name, value)
 
-        # Snap to closest note if within tolerance, else unknown
         if smallest_error <= tolerance:
+            # Clean match
             duration_name, quantized_beats = best_match
-        else:
-            duration_name = "unknown"
-            quantized_beats = round(beats, 2)
+            quantized.append({
+                "start": note["start"],
+                "end": note["end"],
+                "pitch": note["pitch"],
+                "duration_beats": beats,
+                "quantized_beats": quantized_beats,
+                "duration_name": duration_name
+            })
 
-        quantized.append({
-            "start": note["start"],
-            "end": note["end"],
-            "pitch": note["pitch"],
-            "duration_beats": round(beats, 2),
-            "quantized_beats": quantized_beats,
-            "duration_name": duration_name
-        })
+        else:
+            # ---- TIE SPLITTING (FIX) ----
+            parts = split_into_tied_durations(beats)
+
+            if len(parts) == 1:
+                # Still cannot express cleanly
+                quantized.append({
+                    "start": note["start"],
+                    "end": note["end"],
+                    "pitch": note["pitch"],
+                    "duration_beats": beats,
+                    "quantized_beats": beats,
+                    "duration_name": "unknown"
+                })
+            else:
+                quantized.append({
+                    "start": note["start"],
+                    "end": note["end"],
+                    "pitch": note["pitch"],
+                    "duration_beats": beats,
+                    "quantized_beats": beats,
+                    "duration_name": "tied",
+                    "tied_parts": parts
+                })
 
     return quantized
+
+def quantize_duration(duration_beats, tolerance=0.15):
+    """
+    Validation helper:
+    Quantize a duration (in beats) into a musical note name.
+    """
+
+    best_match = None
+    smallest_error = float("inf")
+
+    for name, value in NOTE_VALUES.items():
+        error = abs(duration_beats - value)
+        if error < smallest_error:
+            smallest_error = error
+            best_match = name
+
+    if smallest_error <= tolerance:
+        return best_match
+
+    return "unknown"

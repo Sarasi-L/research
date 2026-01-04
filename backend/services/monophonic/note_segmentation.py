@@ -2,7 +2,9 @@
 
 import numpy as np
 
-# Define pitch ranges for instruments
+# -------------------------------------------------
+# Instrument pitch ranges (Hz)
+# -------------------------------------------------
 INSTRUMENT_PITCH_RANGES = {
     "flute":  (260, 2100),
     "violin": (196, 3500),
@@ -12,6 +14,9 @@ INSTRUMENT_PITCH_RANGES = {
 }
 
 
+# -------------------------------------------------
+# Frame → Note segmentation
+# -------------------------------------------------
 def frames_to_notes(
     time,
     freq,
@@ -22,7 +27,7 @@ def frames_to_notes(
     min_note_duration=0.08
 ):
     """
-    Convert pitch frames to musical note events
+    Convert CREPE pitch frames to raw musical note events
 
     Returns:
     [
@@ -30,7 +35,7 @@ def frames_to_notes(
     ]
     """
 
-    # Set instrument pitch range
+    # Instrument-aware pitch limits
     min_pitch, max_pitch = (0, float("inf"))
     if instrument and instrument in INSTRUMENT_PITCH_RANGES:
         min_pitch, max_pitch = INSTRUMENT_PITCH_RANGES[instrument]
@@ -41,13 +46,13 @@ def frames_to_notes(
 
     for i in range(len(freq)):
 
-        # Determine if frame is voiced and within instrument range
+        # Frame is voiced & valid
         voiced = conf[i] >= conf_thresh and not np.isnan(freq[i])
         if voiced and not (min_pitch <= freq[i] <= max_pitch):
-            voiced = False  # Instrument-aware filtering
+            voiced = False
 
+        # ---------------- End note ----------------
         if not voiced:
-            # End current note
             if current_start is not None:
                 end_time = time[i]
                 if end_time - current_start >= min_note_duration:
@@ -60,13 +65,13 @@ def frames_to_notes(
                 current_pitch = None
             continue
 
-        # First voiced frame
+        # ---------------- Start note ----------------
         if current_start is None:
             current_start = time[i]
             current_pitch = freq[i]
             continue
 
-        # Pitch jump → new note
+        # ---------------- Pitch change → new note ----------------
         if abs(freq[i] - current_pitch) > pitch_change_thresh:
             end_time = time[i]
             if end_time - current_start >= min_note_duration:
@@ -77,11 +82,12 @@ def frames_to_notes(
                 })
             current_start = time[i]
             current_pitch = freq[i]
+
         else:
-            # Smooth pitch update
+            # Smooth pitch tracking
             current_pitch = 0.9 * current_pitch + 0.1 * freq[i]
 
-    # Close last note
+    # Close final note
     if current_start is not None:
         notes.append({
             "start": round(current_start, 3),
@@ -90,3 +96,38 @@ def frames_to_notes(
         })
 
     return notes
+
+
+# -------------------------------------------------
+# NOTE DURATION SMOOTHING  (CRITICAL FIX)
+# -------------------------------------------------
+def smooth_note_durations(notes, min_duration=0.15):
+    """
+    Merge extremely short notes into neighboring notes
+    to prevent micro-segmentation from CREPE.
+
+    This MUST be applied before tempo estimation
+    and quantization.
+    """
+
+    if not notes:
+        return notes
+
+    smoothed = []
+    current = notes[0].copy()
+
+    for n in notes[1:]:
+        current_dur = current["end"] - current["start"]
+
+        # If current note is too short → merge
+        if current_dur < min_duration:
+            current["end"] = n["end"]
+            current["pitch"] = (
+                0.7 * current["pitch"] + 0.3 * n["pitch"]
+            )
+        else:
+            smoothed.append(current)
+            current = n.copy()
+
+    smoothed.append(current)
+    return smoothed

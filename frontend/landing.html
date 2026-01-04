@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome | Music Analyzer</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            color: white;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Video Background */
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .video-background video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.3;
+        }
+
+        .video-background::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.5));
+        }
+
+        /* Main Container Split */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Left Side - Image Background Section */
+        .left-section {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        .left-content {
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            animation: fadeInLeft 1s ease-out;
+        }
+
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .main-title {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+            animation: fadeInUp 1s ease-out 0.3s;
+            animation-fill-mode: both;
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        .main-title .highlight {
+            color: #00ff00;
+            text-shadow: 0 0 30px rgba(0, 255, 0, 0.8);
+        }
+
+        .main-subtitle {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            line-height: 1.8;
+            max-width: 500px;
+            animation: fadeInUp 1s ease-out 0.5s;
+            animation-fill-mode: both;
+        }
+
+        /* Right Side - Cards Section */
+        .right-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px;
+            animation: fadeInRight 1s ease-out;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        .section-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Feature Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            border-radius: 20px;
+            padding: 30px 25px;
+            text-align: center;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 1s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .feature-card:nth-child(1) { animation-delay: 0.2s; }
+        .feature-card:nth-child(2) { animation-delay: 0.3s; }
+        .feature-card:nth-child(3) { animation-delay: 0.4s; }
+        .feature-card:nth-child(4) { animation-delay: 0.5s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 0, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .feature-card:hover::before {
+            left: 100%;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #00ff00;
+            box-shadow: 0 20px 40px rgba(0, 255, 0, 0.5);
+        }
+
+        .card-image {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, rgba(0, 255, 0, 0.4), rgba(0, 255, 0, 0.1));
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            transition: transform 0.3s;
+            border: 2px solid rgba(0, 255, 0, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.3);
+        }
+
+        .feature-card:hover .card-image {
+            transform: scale(1.15) rotate(5deg);
+            box-shadow: 0 10px 25px rgba(0, 255, 0, 0.5);
+        }
+
+        .feature-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #00ff00;
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+
+        .feature-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.5;
+        }
+
+        /* CTA Button */
+        .cta-section {
+            text-align: center;
+            padding-bottom: 30px;
+            animation: fadeInUp 1s ease-out 0.6s;
+            animation-fill-mode: both;
+        }
+
+        .start-btn {
+            padding: 18px 50px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 50px;
+            border: 2px solid #00ff00;
+            cursor: pointer;
+            color: #000;
+            background: #00ff00;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 255, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .start-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .start-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 45px rgba(0, 255, 0, 0.7);
+        }
+
+        .start-btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .left-section {
+                min-height: 50vh;
+            }
+
+            .left-content,
+            .right-section {
+                padding: 40px 30px;
+            }
+
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 32px;
+            }
+
+            .section-title {
+                font-size: 28px;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .start-btn {
+                padding: 16px 40px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Video Background -->
+    <div class="video-background">
+        <video autoplay loop muted playsinline>
+            <source src="assets/videos/greennotes.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <div class="main-container">
+        <!-- Left Section -->
+        <div class="left-section">
+            <div class="left-content">
+                <h1 class="main-title">
+                    Advanced <span class="highlight">Music Analysis</span>
+                </h1>
+                <p class="main-subtitle">
+                    Deep rhythm, melody, and harmony analysis just a click away.
+                    Will your beat stand out or blend in? Let's find out.
+                    Discover your song's hidden twins in the music universe.
+                </p>
+            </div>
+        </div>
+
+        <!-- Right Section - Cards -->
+        <div class="right-section">
+            <div class="section-header">
+                <h2 class="section-title">Choose Your Analysis</h2>
+                <p class="section-subtitle">Select a feature to get started</p>
+            </div>
+
+            <div class="cards-grid">
+                <div class="feature-card">
+                    <div class="card-image">🎸</div>
+                    <h3 class="feature-title">Instrument Profiling</h3>
+                    <p class="feature-desc">
+                        Deep instrument pattern recognition and profiling
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-image">🎼</div>
+                    <h3 class="feature-title">Mono Transcription</h3>
+                    <p class="feature-desc">
+                        Single melody line transcription and analysis
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-image">🎹</div>
+                    <h3 class="feature-title">Poly Transcription</h3>
+                    <p class="feature-desc">
+                        Complex polyphonic music transcription
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="card-image">🎶</div>
+                    <h3 class="feature-title">Notation Conversion</h3>
+                    <p class="feature-desc">
+                        Convert to Western music notation format
+                    </p>
+                </div>
+            </div>
+
+            <div class="cta-section">
+                <button class="start-btn" id="startBtn">
+                    <span>🚀 Let's Start Analyzing</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="landing.js"></script>
+</body>
+</html>
