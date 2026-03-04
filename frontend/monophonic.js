@@ -1,3 +1,5 @@
+// frontend/monophonic.js
+
 const params = new URLSearchParams(window.location.search);
 const filename = params.get("file");
 

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pitch Analysis – Explainable View</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {
+    background: #000 url('assets/images/3.jpg') center/cover fixed;
+    color: #00FF00;
+    font-family: Segoe UI, sans-serif;
+    padding: 30px;
+    position: relative;
+}
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: -1;
+}
+h1 {
+    text-align: center;
+    margin-bottom: 10px;
+    text-shadow: 0 0 20px #00FF00;
+}
+.subtitle {
+    text-align: center;
+    opacity: 0.7;
+    margin-bottom: 30px;
+}
+.section {
+    border: 2px solid #00FF00;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 30px;
+    background: rgba(0,255,0,0.05);
+}
+canvas {
+    background: #111;
+    border-radius: 10px;
+    padding: 10px;
+}
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 15px;
+    overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+}
+th, td {
+    border: none;
+    padding: 16px 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+}
+th {
+    background: linear-gradient(135deg, rgba(0, 255, 0, 0.3), rgba(0, 200, 0, 0.25));
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+tbody tr {
+    background: rgba(0, 255, 0, 0.03);
+    transition: all 0.3s ease;
+}
+tbody tr:hover {
+    background: rgba(0, 255, 0, 0.12);
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(0, 255, 0, 0.2);
+}
+tbody tr:nth-child(even) {
+    background: rgba(0, 255, 0, 0.06);
+}
+tbody tr:nth-child(even):hover {
+    background: rgba(0, 255, 0, 0.15);
+}
+td {
+    font-size: 15px;
+}
+td:first-child {
+    font-weight: bold;
+    font-size: 18px;
+    color: #00FF00;
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.6);
+}
+.note-info {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.info-card {
+    flex: 1;
+    min-width: 200px;
+    background: linear-gradient(135deg, rgba(0, 255, 0, 0.1), rgba(0, 150, 0, 0.05));
+    border: 1px solid #00FF00;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 255, 0, 0.2);
+}
+.info-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.info-card .value {
+    font-size: 28px;
+    font-weight: bold;
+    text-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+}
+.back-btn {
+    display: block;
+    margin: 40px auto 0;
+    padding: 15px 40px;
+    background: #00FF00;
+    color: #000;
+    border: none;
+    font-weight: bold;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+.back-btn:hover {
+    background: #00CC00;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    transform: scale(1.05);
+}
+</style>
+</head>
+<body>
+<h1>Pitch Curve & Note Segmentation</h1>
+<div class="subtitle">
+Explainable transcription for learners, teachers & musicians
+</div>
+
+<!-- Pitch Curve -->
+<div class="section">
+<h2>Pitch Curve (Time vs Frequency)</h2>
+<canvas id="pitchChart" height="120"></canvas>
+</div>
+
+<!-- Note Segments -->
+<div class="section">
+<h2>Segmented Notes</h2>
+<table>
+<thead>
+<tr>
+<th>Note</th>
+<th>Start (s)</th>
+<th>End (s)</th>
+<th>Duration (s)</th>
+</tr>
+</thead>
+<tbody id="notesTable"></tbody>
+</table>
+</div>
+
+<button class="back-btn" onclick="goBack()">← Back to Monophonic Analysis</button>
+
+<script>
+const data = JSON.parse(localStorage.getItem("monophonicAnalysis"));
+if (!data) {
+    alert("No analysis data found");
+}
+
+/* ---------------- Pitch Curve ---------------- */
+const pitchData = data.pitch_curve.filter(p => p.frequency > 0);
+const chart = new Chart(document.getElementById("pitchChart"), {
+    type: 'line',
+    data: {
+        labels: pitchData.map(p => p.time.toFixed(2)),
+        datasets: [{
+            label: 'Pitch (Hz)',
+            data: pitchData.map(p => p.frequency),
+            borderColor: '#00FF00',
+            backgroundColor: 'rgba(0, 255, 0, 0.1)',
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: 0.2
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                labels: { color: '#00FF00' }
+            }
+        },
+        scales: {
+            x: { 
+                title: { display: true, text: 'Time (s)', color: '#00FF00' },
+                ticks: { color: '#00FF00' },
+                grid: { color: 'rgba(0, 255, 0, 0.1)' }
+            },
+            y: { 
+                title: { display: true, text: 'Frequency (Hz)', color: '#00FF00' },
+                ticks: { color: '#00FF00' },
+                grid: { color: 'rgba(0, 255, 0, 0.1)' }
+            }
+        }
+    }
+});
+
+/* ---------------- Note Table ---------------- */
+const tbody = document.getElementById("notesTable");
+let totalDuration = 0;
+let uniqueNotes = new Set();
+
+data.note_segments.forEach(n => {
+    const row = document.createElement("tr");
+    const duration = (n.end - n.start);
+    totalDuration += duration;
+    uniqueNotes.add(n.note);
+    
+    row.innerHTML = `
+        <td>${n.note}</td>
+        <td>${n.start.toFixed(2)}</td>
+        <td>${n.end.toFixed(2)}</td>
+        <td>${duration.toFixed(2)}</td>
+    `;
+    tbody.appendChild(row);
+});
+
+// Add summary info cards
+const notesSection = document.querySelector('.section:last-of-type');
+const infoCards = document.createElement('div');
+infoCards.className = 'note-info';
+infoCards.innerHTML = `
+    <div class="info-card">
+        <h3>Total Notes</h3>
+        <div class="value">${data.note_segments.length}</div>
+    </div>
+    <div class="info-card">
+        <h3>Unique Notes</h3>
+        <div class="value">${uniqueNotes.size}</div>
+    </div>
+    <div class="info-card">
+        <h3>Total Duration</h3>
+        <div class="value">${totalDuration.toFixed(1)}s</div>
+    </div>
+    <div class="info-card">
+        <h3>Avg Note Length</h3>
+        <div class="value">${(totalDuration / data.note_segments.length).toFixed(2)}s</div>
+    </div>
+`;
+notesSection.appendChild(infoCards);
+
+function goBack() {
+    window.location.href = "monophonic.html";
+}
+</script>
+</body>
+</html>

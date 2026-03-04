@@ -1,0 +1,3 @@
+from backend.services.validation.structural_validation import structural_validation
+
+structural_validation("backend/midi_output/full_song_key_ts.mid")

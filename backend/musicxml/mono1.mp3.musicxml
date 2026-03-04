@@ -5,7 +5,7 @@
   <identification>
     <creator type="composer">Music21</creator>
     <encoding>
-      <encoding-date>2025-12-26</encoding-date>
+      <encoding-date>2026-02-04</encoding-date>
       <software>music21 v.9.9.1</software>
     </encoding>
   </identification>
@@ -16,12 +16,12 @@
     </scaling>
   </defaults>
   <part-list>
-    <score-part id="P7a30cdc4a930259abf53ddeb60edfe2e">
+    <score-part id="P568156d283b564894f72d1f3fe87ab89">
       <part-name />
     </score-part>
   </part-list>
   <!--=========================== Part 1 ===========================-->
-  <part id="P7a30cdc4a930259abf53ddeb60edfe2e">
+  <part id="P568156d283b564894f72d1f3fe87ab89">
     <!--========================= Measure 0 ==========================-->
     <measure implicit="no" number="0">
       <attributes>
@@ -40,26 +40,8 @@
           <step>B</step>
           <octave>4</octave>
         </pitch>
-        <duration>18547</duration>
+        <duration>20160</duration>
         <type>half</type>
-        <time-modification>
-          <actual-notes>25</actual-notes>
-          <normal-notes>23</normal-notes>
-          <normal-type>64th</normal-type>
-        </time-modification>
-        <notations>
-          <tuplet bracket="no" number="1" placement="above" type="start">
-            <tuplet-actual>
-              <tuplet-number>25</tuplet-number>
-              <tuplet-type>64th</tuplet-type>
-            </tuplet-actual>
-            <tuplet-normal>
-              <tuplet-number>23</tuplet-number>
-              <tuplet-type>64th</tuplet-type>
-            </tuplet-normal>
-          </tuplet>
-          <tuplet number="1" type="stop" />
-        </notations>
       </note>
       <note>
         <pitch>
@@ -82,33 +64,26 @@
       </note>
       <note>
         <rest />
-        <duration>9173</duration>
-        <type>quarter</type>
-        <time-modification>
-          <actual-notes>100</actual-notes>
-          <normal-notes>91</normal-notes>
-          <normal-type>512th</normal-type>
-        </time-modification>
-        <notations>
-          <tuplet bracket="no" number="1" placement="above" type="start">
-            <tuplet-actual>
-              <tuplet-number>100</tuplet-number>
-              <tuplet-type>512th</tuplet-type>
-            </tuplet-actual>
-            <tuplet-normal>
-              <tuplet-number>91</tuplet-number>
-              <tuplet-type>512th</tuplet-type>
-            </tuplet-normal>
-          </tuplet>
-          <tuplet number="1" type="stop" />
-        </notations>
+        <duration>7560</duration>
+        <type>eighth</type>
+        <dot />
       </note>
     </measure>
     <!--========================= Measure 0 ==========================-->
     <measure implicit="no" number="0">
       <note>
-        <rest measure="yes" />
+        <pitch>
+          <step>D</step>
+          <alter>1</alter>
+          <octave>4</octave>
+        </pitch>
         <duration>40320</duration>
+        <tie type="start" />
+        <type>whole</type>
+        <accidental>sharp</accidental>
+        <notations>
+          <tied type="start" />
+        </notations>
       </note>
     </measure>
     <!--========================= Measure 0 ==========================-->
@@ -120,10 +95,6 @@
         </pitch>
         <duration>5040</duration>
         <type>eighth</type>
-      </note>
-      <note>
-        <rest measure="yes" />
-        <duration>40320</duration>
       </note>
       <note>
         <pitch>
@@ -148,26 +119,8 @@
     <measure implicit="no" number="1">
       <note>
         <rest />
-        <duration>27216</duration>
-        <type>whole</type>
-        <time-modification>
-          <actual-notes>40</actual-notes>
-          <normal-notes>27</normal-notes>
-          <normal-type>64th</normal-type>
-        </time-modification>
-        <notations>
-          <tuplet bracket="no" number="1" placement="above" type="start">
-            <tuplet-actual>
-              <tuplet-number>40</tuplet-number>
-              <tuplet-type>64th</tuplet-type>
-            </tuplet-actual>
-            <tuplet-normal>
-              <tuplet-number>27</tuplet-number>
-              <tuplet-type>64th</tuplet-type>
-            </tuplet-normal>
-          </tuplet>
-          <tuplet number="1" type="stop" />
-        </notations>
+        <duration>5040</duration>
+        <type>eighth</type>
       </note>
     </measure>
   </part>

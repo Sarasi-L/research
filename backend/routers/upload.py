@@ -1,3 +1,5 @@
+# backend/routers/upload.py
+
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
 from pathlib import Path
@@ -28,7 +30,7 @@ from services.monophonic.western_notation.musicxml_export import generate_musicx
 from services.hybrid_detect_type import detect_type
 from services.detect_monophonic_instrument import detect_single_instrument
 from services.detect_instruments import detect_all_instruments
-from services.separate_demucs import separate_polyphonic
+from services.polyphonic.separate_demucs import separate_polyphonic
 
 
 router = APIRouter()
@@ -97,6 +99,14 @@ async def analyze_monophonic(filename: str):
             quantized_notes, f"{key_result['key']} {key_result['mode']}"
         )
 
+        # ✅ Normalize note field for frontend display
+        for n in named_notes:
+            if n.get("is_rest", False):
+                n["note"] = "Rest"
+            else:
+                n["note"] = n.get("note_name", None)
+
+
         beats_per_measure = int(
             estimate_time_signature(named_notes, final_tempo["tempo"]).split("/")[0]
         )
@@ -118,8 +128,13 @@ async def analyze_monophonic(filename: str):
             "tempo": final_tempo,
             "key": key_result,
             "beats_per_measure": beats_per_measure,
-            "musicxml_file": f"/musicxml/{musicxml_file.name}"
+            "musicxml_file": f"/musicxml/{musicxml_file.name}",
+
+            # 🔽 ADD THESE TWO LINES
+            "pitch_curve": pitch_result["pitch_points"],
+            "note_segments": named_notes
         })
+
 
     except Exception as e:
         traceback.print_exc()

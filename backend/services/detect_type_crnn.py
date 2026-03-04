@@ -1,4 +1,4 @@
-# backend/services/detect_type.py
+# backend/services/detect_type_crnn.py
 """
 CRNN-based Monophonic vs Polyphonic Audio Classifier
 Replaces rule-based + CREPE detector

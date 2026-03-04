@@ -1,7 +1,5 @@
 // frontend/renderer.js
 
-// frontend/renderer.js
-
 let uploadedFileName = null;
 let detectedType = null;
 

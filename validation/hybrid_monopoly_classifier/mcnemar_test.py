@@ -1,3 +1,5 @@
+# validation/hybrid_monopoly_classifier/mcnemar_test.py
+
 import pandas as pd
 from statsmodels.stats.contingency_tables import mcnemar
 from pathlib import Path

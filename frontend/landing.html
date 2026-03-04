@@ -60,7 +60,18 @@
             flex: 1;
             position: relative;
             overflow: hidden;
-            background: transparent;
+            background: url('assets/images/14.jpg') center/cover;
+        }
+
+        .left-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 1;
         }
 
         .left-content {
@@ -119,8 +130,48 @@
             justify-content: center;
             padding: 60px;
             animation: fadeInRight 1s ease-out;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .right-section-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .right-section-video video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+        }
+
+        .right-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(5px);
+            z-index: 1;
+        }
+
+        .right-section .section-header,
+        .right-section .cards-grid {
+            position: relative;
+            z-index: 2;
         }
 
         @keyframes fadeInRight {
@@ -251,23 +302,26 @@
         .cta-section {
             text-align: center;
             padding-bottom: 30px;
+            padding-top: 20px;
             animation: fadeInUp 1s ease-out 0.6s;
             animation-fill-mode: both;
         }
 
         .start-btn {
-            padding: 18px 50px;
-            font-size: 20px;
+            padding: 20px 60px;
+            font-size: 22px;
             font-weight: bold;
             border-radius: 50px;
-            border: 2px solid #00ff00;
+            border: 3px solid #00ff00;
             cursor: pointer;
             color: #000;
             background: #00ff00;
             transition: all 0.3s ease;
-            box-shadow: 0 10px 30px rgba(0, 255, 0, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 255, 0, 0.6);
             position: relative;
             overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         .start-btn::before {
@@ -290,7 +344,7 @@
 
         .start-btn:hover {
             transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 15px 45px rgba(0, 255, 0, 0.7);
+            box-shadow: 0 15px 45px rgba(0, 255, 0, 0.9);
         }
 
         .start-btn span {
@@ -354,21 +408,33 @@
         <div class="left-section">
             <div class="left-content">
                 <h1 class="main-title">
-                    Advanced <span class="highlight">Music Analysis</span>
+                    Advanced <span class="highlight">Music Notation & Analysis</span>
                 </h1>
                 <p class="main-subtitle">
-                    Deep rhythm, melody, and harmony analysis just a click away.
-                    Will your beat stand out or blend in? Let's find out.
-                    Discover your song's hidden twins in the music universe.
+                    Transform audio into clear Western notation with intelligent pitch, rhythm, and instrument analysis. 
+                    Learn, teach, and explore music. One note at a time.
                 </p>
+                
+                <div class="cta-section">
+                    <button class="start-btn" id="startBtn">
+                        <span>Let's Start</span>
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- Right Section - Cards -->
         <div class="right-section">
+            <div class="right-section-video">
+                <video autoplay loop muted playsinline>
+                    <source src="assets/videos/greenshort.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+
             <div class="section-header">
-                <h2 class="section-title">Choose Your Analysis</h2>
-                <p class="section-subtitle">Select a feature to get started</p>
+                <h2 class="section-title">Our Features</h2>
+                <p class="section-subtitle">Powerful tools built for music learning and notation</p>
             </div>
 
             <div class="cards-grid">
@@ -404,15 +470,20 @@
                     </p>
                 </div>
             </div>
-
-            <div class="cta-section">
-                <button class="start-btn" id="startBtn">
-                    <span>🚀 Let's Start Analyzing</span>
-                </button>
-            </div>
         </div>
     </div>
 
-    <script src="landing.js"></script>
+    <script>
+        document.getElementById('startBtn').addEventListener('click', function() {
+            // Add a smooth transition effect before navigation
+            document.body.style.opacity = '0.7';
+            document.body.style.transition = 'opacity 0.3s ease';
+            
+            // Navigate to selection page after brief delay for visual feedback
+            setTimeout(function() {
+                window.location.href = 'index.html';
+            }, 300);
+        });
+    </script>
 </body>
 </html>

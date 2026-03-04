@@ -1,0 +1,3 @@
+from backend.services.validation.score_integrity import score_integrity_validation
+
+score_integrity_validation("backend/midi_output/full_song_key_ts.mid")
