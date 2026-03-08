@@ -1,489 +1,498 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Welcome | Music Analyzer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoteScribe — Music Notation & Analysis</title>
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg:      #020221;
+            --blue:    #0096FF;
+            --bglow:   rgba(0,150,255,0.20);
+            --bsoft:   rgba(0,150,255,0.09);
+            --white:   #ffffff;
+            --muted:   rgba(255,255,255,0.46);
+            --border:  rgba(0,150,255,0.15);
+            --dp:      'Segoe UI Semibold','Segoe UI',sans-serif;
+            --bd:      'Segoe UI',sans-serif;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #000;
-            color: white;
-            min-height: 100vh;
-            overflow: hidden;
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+        html, body {
+            width:100vw; height:100vh;
+            overflow:hidden;
+            background:var(--bg);
+            color:var(--white);
+            font-family: var(--bd);
         }
 
-        /* Video Background */
-        .video-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            overflow: hidden;
+        /* ── BG canvas ── */
+        #cvs { position:fixed; inset:0; z-index:0; pointer-events:none; }
+
+        /* ── grain ── */
+        body::after {
+            content:''; position:fixed; inset:0; z-index:1; pointer-events:none;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='g'%3E%3CfeTurbulence baseFrequency='0.68' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.032'/%3E%3C/svg%3E");
+            opacity:0.45;
         }
 
-        .video-background video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.3;
+        /* ── LAYOUT ── */
+        .shell {
+            position:relative; z-index:2;
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            width:100vw; height:100vh;
         }
 
-        .video-background::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.5));
+        /* ══════════════════════════
+           LEFT PANEL
+        ══════════════════════════ */
+        .lp {
+            display:flex; flex-direction:column;
+            padding: 3.2vh 4vw 3.2vh 4vw;
+            border-right:1px solid var(--border);
+            position:relative; overflow:hidden;
+            justify-content:space-between;
         }
 
-        /* Main Container Split */
-        .main-container {
-            position: relative;
-            z-index: 10;
-            display: flex;
-            min-height: 100vh;
+        /* glow edge */
+        .lp::after {
+            content:''; position:absolute;
+            top:0; right:-1px;
+            width:1px; height:100%;
+            background:linear-gradient(180deg,transparent,var(--blue) 50%,transparent);
+            opacity:0.5; animation:beam 5s ease-in-out infinite;
+        }
+        @keyframes beam{0%,100%{opacity:0.25}50%{opacity:0.85}}
+
+        /* ── LOGO ── */
+        .logo {
+            display:flex; align-items:center; gap:10px;
+            animation:rise .55s ease both;
+        }
+        .logo-mark {
+            width:34px; height:34px; border-radius:8px;
+            background:var(--blue);
+            display:flex; align-items:center; justify-content:center;
+            font-size:18px;
+            box-shadow:0 0 16px rgba(0,150,255,.55);
+        }
+        .logo-text {
+            font-family:var(--dp);
+            font-weight:800; font-size:17px; letter-spacing:.3px;
+        }
+        .logo-text b { color:var(--blue); font-weight:800; }
+        .vtag {
+            margin-left:auto;
+            font-size:10px; font-weight:700; letter-spacing:1.2px;
+            text-transform:uppercase; color:var(--blue);
+            border:1px solid rgba(0,150,255,.32);
+            padding:3px 10px; border-radius:20px;
+            background:var(--bsoft);
         }
 
-        /* Left Side - Image Background Section */
-        .left-section {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-            background: url('assets/images/14.jpg') center/cover;
+        /* ── HERO ── */
+        .hero {
+            flex:1; display:flex; flex-direction:column;
+            justify-content:center; padding:12px 0;
+            animation:rise .55s .12s ease both;
         }
 
-        .left-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            z-index: 1;
+        .eyebrow {
+            display:flex; align-items:center; gap:10px;
+            font-size:10px; font-weight:600;
+            letter-spacing:3px; text-transform:uppercase;
+            color:var(--blue); margin-bottom:18px;
+        }
+        .eyebrow::before {
+            content:''; width:20px; height:1px;
+            background:var(--blue); flex-shrink:0;
         }
 
-        .left-content {
-            position: relative;
-            z-index: 2;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 60px;
-            animation: fadeInLeft 1s ease-out;
+        .h1 {
+            font-family:var(--dp);
+            font-weight:900;
+            font-size:clamp(32px, 3.6vw, 56px);
+            line-height:1.0; letter-spacing:-1.2px;
+            text-transform:uppercase; margin-bottom:18px;
+        }
+        .h1 .accent {
+            color:var(--blue); display:block;
+            position:relative;
+        }
+        .h1 .accent::after {
+            content:''; position:absolute;
+            left:0; bottom:-3px;
+            width:48%; height:3px;
+            background:var(--blue); border-radius:2px; opacity:.45;
         }
 
-        @keyframes fadeInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        .desc {
+            font-size:13px; line-height:1.85;
+            color:var(--muted); max-width:360px;
+            margin-bottom:26px; font-weight:400;
         }
 
-        .main-title {
-            font-size: 48px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            text-align: center;
-            animation: fadeInUp 1s ease-out 0.3s;
-            animation-fill-mode: both;
-            text-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        /* ── STATS ── */
+        .stats {
+            display:flex; gap:11px;
+            animation:rise .55s .28s ease both;
+        }
+        .pill {
+            padding:11px 18px;
+            border:1px solid var(--border); border-radius:11px;
+            background:var(--bsoft); backdrop-filter:blur(6px);
+            transition:all .3s ease; cursor:default;
+        }
+        .pill:hover {
+            border-color:var(--blue); background:var(--bglow);
+            transform:translateY(-2px);
+        }
+        .pill-n {
+            font-family:var(--dp);
+            font-weight:900; font-size:21px; line-height:1;
+        }
+        .pill-l { font-size:10px; color:var(--muted); margin-top:3px; }
+
+        /* ── FEATURES ROW ── */
+        .features {
+            display:flex; gap:10px;
+            animation:rise .55s .4s ease both;
+        }
+        .feat {
+            flex:1; padding:13px 12px 11px;
+            border:1px solid var(--border); border-radius:11px;
+            background:var(--bsoft); text-align:center;
+            cursor:default; transition:all .3s ease; position:relative; overflow:hidden;
+        }
+        .feat::after {
+            content:''; position:absolute;
+            bottom:0; left:0; width:100%; height:2px;
+            background:var(--blue);
+            transform:scaleX(0); transform-origin:left;
+            transition:transform .35s ease;
+        }
+        .feat:hover { border-color:var(--blue); transform:translateY(-3px); box-shadow:0 10px 26px rgba(0,150,255,.13); }
+        .feat:hover::after { transform:scaleX(1); }
+        .feat-n {
+            font-family:var(--dp);
+            font-weight:900; font-size:11px; color:var(--blue); line-height:1;
+            text-transform:uppercase; letter-spacing:.8px;
         }
 
-        .main-title .highlight {
-            color: #00ff00;
-            text-shadow: 0 0 30px rgba(0, 255, 0, 0.8);
+        /* ── FOOTER ── */
+        .lfoot {
+            display:flex; align-items:center; justify-content:space-between;
+            animation:rise .55s .5s ease both;
+            margin-top:14px;
+        }
+        .lfoot-note { font-size:11px; color:rgba(255,255,255,.26); }
+        .lfoot-note b { color:var(--blue); font-weight:600; }
+        .statusrow { display:flex; align-items:center; gap:7px; font-size:11px; color:var(--muted); }
+        .dot { width:7px; height:7px; border-radius:50%; background:#00e676; box-shadow:0 0 8px rgba(0,230,118,.9); animation:blink 2s ease-in-out infinite; }
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+        /* ══════════════════════════
+           RIGHT PANEL
+        ══════════════════════════ */
+        .rp {
+            position:relative;
+            display:flex; flex-direction:column;
+            align-items:flex-start; justify-content:flex-end;
+            overflow:hidden;
         }
 
-        .main-subtitle {
-            font-size: 18px;
-            color: rgba(255, 255, 255, 0.8);
-            text-align: center;
-            line-height: 1.8;
-            max-width: 500px;
-            animation: fadeInUp 1s ease-out 0.5s;
-            animation-fill-mode: both;
+        /* IMAGE LAYER — replace url() with your assets image path */
+        .r-img {
+            position:absolute; inset:0; z-index:0;
+            background:
+                linear-gradient(to right,  rgba(2,2,33,0.88) 0%, rgba(2,2,33,0.40) 40%, rgba(2,2,33,0.08) 100%),
+                linear-gradient(to bottom, rgba(2,2,33,0.30) 0%, transparent 28%, transparent 60%, rgba(2,2,33,0.80) 100%),
+                url('assets/images/100.jpg') center center / cover no-repeat;
+        }
+        /* blue tint overlay */
+        .r-img::after {
+            content:''; position:absolute; inset:0;
+            background:radial-gradient(ellipse at 65% 45%, rgba(0,150,255,0.10), transparent 65%);
         }
 
-        /* Right Side - Cards Section */
-        .right-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 60px;
-            animation: fadeInRight 1s ease-out;
-            position: relative;
-            overflow: hidden;
+        /* bottom-left content area */
+        .r-content {
+            position:relative; z-index:2;
+            padding: 0 4.5vw 5.5vh 4.5vw;
         }
 
-        .right-section-video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            overflow: hidden;
+        .r-eyebrow {
+            font-size:10px; font-weight:600;
+            letter-spacing:3px; text-transform:uppercase;
+            color:var(--blue); margin-bottom:13px;
+            display:flex; align-items:center; gap:10px;
+            animation:rise .55s .18s ease both;
+        }
+        .r-eyebrow::before { content:''; width:20px; height:1px; background:var(--blue); }
+
+        .r-title {
+            font-family:var(--dp);
+            font-weight:900;
+            font-size:clamp(28px, 2.8vw, 46px);
+            line-height:1.0; letter-spacing:-1px;
+            text-transform:uppercase;
+            margin-bottom:8px;
+            animation:rise .55s .26s ease both;
+        }
+        .r-title .accent { color:var(--blue); }
+
+        .r-sub {
+            font-size:13px; color:var(--muted);
+            line-height:1.75; max-width:340px;
+            margin-bottom:24px; font-weight:400;
+            animation:rise .55s .34s ease both;
         }
 
-        .right-section-video video {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
-            transform: translate(-50%, -50%);
-            object-fit: cover;
+        /* ── STAFF LINES ANIMATION ── */
+        .staff-anim {
+            display:flex; flex-direction:column;
+            gap:5px; margin-bottom:26px;
+            animation:rise .55s .4s ease both;
+            height:34px; justify-content:center;
+            position:relative; width:280px;
+        }
+        .staff-line {
+            height:1px;
+            background:linear-gradient(to right, transparent, rgba(0,150,255,0.5), transparent);
+            position:relative;
+        }
+        /* animated note dots */
+        .note-dot {
+            position:absolute;
+            width:8px; height:8px; border-radius:50%;
+            background:var(--blue);
+            box-shadow:0 0 8px rgba(0,150,255,.8);
+            top:-3px;
+            animation:slide-note 4s ease-in-out infinite;
+        }
+        .note-dot:nth-child(1){ animation-delay:0s; left:15%;}
+        .note-dot:nth-child(2){ animation-delay:0.8s; left:35%;}
+        .note-dot:nth-child(3){ animation-delay:1.6s; left:55%;}
+        .note-dot:nth-child(4){ animation-delay:2.4s; left:75%;}
+        @keyframes slide-note{
+            0%{opacity:0;transform:translateY(0) scale(0.5)}
+            20%{opacity:1;transform:translateY(-4px) scale(1)}
+            80%{opacity:1;transform:translateY(4px) scale(1)}
+            100%{opacity:0;transform:translateY(0) scale(0.5)}
         }
 
-        .right-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(5px);
-            z-index: 1;
+        /* ── CTA ── */
+        .cta-wrap { animation:rise .55s .5s ease both; }
+
+        .cta {
+            display:inline-flex; align-items:center; gap:13px;
+            padding:17px 40px;
+            background:var(--blue); color:#020221;
+            font-family:var(--dp);
+            font-weight:800; font-size:13.5px;
+            letter-spacing:2px; text-transform:uppercase;
+            border:none; border-radius:13px; cursor:pointer;
+            position:relative; overflow:hidden;
+            transition:all .3s ease;
+            box-shadow:0 0 32px rgba(0,150,255,.32);
         }
-
-        .right-section .section-header,
-        .right-section .cards-grid {
-            position: relative;
-            z-index: 2;
+        .cta::before {
+            content:''; position:absolute;
+            top:50%; left:-70px;
+            width:55px; height:200%;
+            background:rgba(255,255,255,.26);
+            transform:translateY(-50%) skewX(-18deg);
+            transition:left .55s ease;
         }
-
-        @keyframes fadeInRight {
-            from {
-                opacity: 0;
-                transform: translateX(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+        .cta:hover::before { left:130%; }
+        .cta:hover {
+            background:#18a8ff;
+            box-shadow:0 0 52px rgba(0,150,255,.6);
+            transform:translateY(-2px);
         }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 40px;
+        .cta-arr {
+            width:26px; height:26px; border-radius:50%;
+            background:rgba(2,2,33,.28);
+            display:flex; align-items:center; justify-content:center;
+            font-size:13px;
+            transition:transform .3s ease;
         }
+        .cta:hover .cta-arr { transform:translateX(4px); }
 
-        .section-title {
-            font-size: 36px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #fff;
-            text-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
-        }
-
-        .section-subtitle {
-            font-size: 16px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        /* Feature Cards Grid */
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 25px;
-            margin-bottom: 50px;
-        }
-
-        .feature-card {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(0, 255, 0, 0.3);
-            border-radius: 20px;
-            padding: 30px 25px;
-            text-align: center;
-            transition: all 0.4s ease;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            animation: fadeInUp 1s ease-out;
-            animation-fill-mode: both;
-        }
-
-        .feature-card:nth-child(1) { animation-delay: 0.2s; }
-        .feature-card:nth-child(2) { animation-delay: 0.3s; }
-        .feature-card:nth-child(3) { animation-delay: 0.4s; }
-        .feature-card:nth-child(4) { animation-delay: 0.5s; }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 255, 0, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .feature-card:hover::before {
-            left: 100%;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            background: rgba(255, 255, 255, 0.15);
-            border-color: #00ff00;
-            box-shadow: 0 20px 40px rgba(0, 255, 0, 0.5);
-        }
-
-        .card-image {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
-            background: linear-gradient(135deg, rgba(0, 255, 0, 0.4), rgba(0, 255, 0, 0.1));
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            transition: transform 0.3s;
-            border: 2px solid rgba(0, 255, 0, 0.4);
-            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.3);
-        }
-
-        .feature-card:hover .card-image {
-            transform: scale(1.15) rotate(5deg);
-            box-shadow: 0 10px 25px rgba(0, 255, 0, 0.5);
-        }
-
-        .feature-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #00ff00;
-            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-        }
-
-        .feature-desc {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
-            line-height: 1.5;
-        }
-
-        /* CTA Button */
-        .cta-section {
-            text-align: center;
-            padding-bottom: 30px;
-            padding-top: 20px;
-            animation: fadeInUp 1s ease-out 0.6s;
-            animation-fill-mode: both;
-        }
-
-        .start-btn {
-            padding: 20px 60px;
-            font-size: 22px;
-            font-weight: bold;
-            border-radius: 50px;
-            border: 3px solid #00ff00;
-            cursor: pointer;
-            color: #000;
-            background: #00ff00;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 30px rgba(0, 255, 0, 0.6);
-            position: relative;
-            overflow: hidden;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .start-btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.4);
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-
-        .start-btn:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .start-btn:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 15px 45px rgba(0, 255, 0, 0.9);
-        }
-
-        .start-btn span {
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .main-container {
-                flex-direction: column;
-            }
-
-            .left-section {
-                min-height: 50vh;
-            }
-
-            .left-content,
-            .right-section {
-                padding: 40px 30px;
-            }
-
-            .cards-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-title {
-                font-size: 32px;
-            }
-
-            .section-title {
-                font-size: 28px;
-            }
-
-            .cards-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .start-btn {
-                padding: 16px 40px;
-                font-size: 18px;
-            }
-        }
+        /* ── shared anim ── */
+        @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
     </style>
 </head>
-
 <body>
-    <!-- Video Background -->
-    <div class="video-background">
-        <video autoplay loop muted playsinline>
-            <source src="assets/videos/greennotes.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-    </div>
 
-    <div class="main-container">
-        <!-- Left Section -->
-        <div class="left-section">
-            <div class="left-content">
-                <h1 class="main-title">
-                    Advanced <span class="highlight">Music Notation & Analysis</span>
-                </h1>
-                <p class="main-subtitle">
-                    Transform audio into clear Western notation with intelligent pitch, rhythm, and instrument analysis. 
-                    Learn, teach, and explore music. One note at a time.
-                </p>
-                
-                <div class="cta-section">
-                    <button class="start-btn" id="startBtn">
-                        <span>Let's Start</span>
-                    </button>
+<canvas id="cvs"></canvas>
+
+<div class="shell">
+
+    <!-- ══ LEFT ══ -->
+    <div class="lp">
+
+        <div class="logo">
+            <div class="logo-mark">𝄞</div>
+            <div class="logo-text">Note<b>Scribe</b></div>
+            <div class="vtag">v1.0.0</div>
+        </div>
+
+        <div class="hero">
+            <div class="eyebrow">Music Notation & Analysis Suite</div>
+            <h1 class="h1">
+                Transform Audio
+                <span class="accent">Into Sheet</span>
+                Music Instantly
+            </h1>
+            <p class="desc">
+                AI-powered pitch detection, rhythm analysis, and instrument profiling.
+                Convert any audio into professional Western notation —
+                built for teachers, students, and musicians.
+            </p>
+
+            <div class="stats">
+                <div class="pill">
+                    <div class="pill-n">4</div>
+                    <div class="pill-l">Core Features</div>
+                </div>
+                <div class="pill">
+                    <div class="pill-n">AI</div>
+                    <div class="pill-l">Powered Engine</div>
+                </div>
+                <div class="pill">
+                    <div class="pill-n">PDF</div>
+                    <div class="pill-l">Sheet Export</div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Section - Cards -->
-        <div class="right-section">
-            <div class="right-section-video">
-                <video autoplay loop muted playsinline>
-                    <source src="assets/videos/greenshort.mp4" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
+        <div class="features">
+            <div class="feat">
+                <div class="feat-n">Instrument<br>Profiling</div>
+            </div>
+            <div class="feat">
+                <div class="feat-n">Mono<br>Transcription</div>
+            </div>
+            <div class="feat">
+                <div class="feat-n">Poly<br>Transcription</div>
+            </div>
+            <div class="feat">
+                <div class="feat-n">Notation<br>Conversion</div>
+            </div>
+        </div>
+
+        <div class="lfoot">
+            <p class="lfoot-note">Powered by <b>AI Pitch Engine</b> &middot; Western Notation</p>
+            <div class="statusrow">
+                <div class="dot"></div>
+                System Ready
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ══ RIGHT ══ -->
+    <div class="rp">
+        <!-- IMAGE: replace url() in .r-img CSS above with your actual asset path -->
+        <div class="r-img"></div>
+
+        <div class="r-content">
+
+            <div class="r-eyebrow">Advanced Notation Dashboard</div>
+
+            <div class="r-title">
+                Start Your<br>
+                <span class="accent">Transcription</span>
             </div>
 
-            <div class="section-header">
-                <h2 class="section-title">Our Features</h2>
-                <p class="section-subtitle">Powerful tools built for music learning and notation</p>
+            <p class="r-sub">
+                Upload any audio and receive clear Western notation —
+                single melody lines, polyphonic layers, and full
+                instrument profiling in one unified view.
+            </p>
+
+            <div class="staff-anim" id="staff">
+                <div class="staff-line"><div class="note-dot"></div></div>
+                <div class="staff-line"><div class="note-dot"></div></div>
+                <div class="staff-line"><div class="note-dot"></div></div>
+                <div class="staff-line"><div class="note-dot"></div></div>
+                <div class="staff-line"></div>
             </div>
 
-            <div class="cards-grid">
-                <div class="feature-card">
-                    <div class="card-image">🎸</div>
-                    <h3 class="feature-title">Instrument Profiling</h3>
-                    <p class="feature-desc">
-                        Deep instrument pattern recognition and profiling
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="card-image">🎼</div>
-                    <h3 class="feature-title">Mono Transcription</h3>
-                    <p class="feature-desc">
-                        Single melody line transcription and analysis
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="card-image">🎹</div>
-                    <h3 class="feature-title">Poly Transcription</h3>
-                    <p class="feature-desc">
-                        Complex polyphonic music transcription
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="card-image">🎶</div>
-                    <h3 class="feature-title">Notation Conversion</h3>
-                    <p class="feature-desc">
-                        Convert to Western music notation format
-                    </p>
-                </div>
+            <div class="cta-wrap">
+                <button class="cta" onclick="go()">
+                    Let's Start
+                    <span class="cta-arr">→</span>
+                </button>
             </div>
+
         </div>
     </div>
 
-    <script>
-        document.getElementById('startBtn').addEventListener('click', function() {
-            // Add a smooth transition effect before navigation
-            document.body.style.opacity = '0.7';
-            document.body.style.transition = 'opacity 0.3s ease';
-            
-            // Navigate to selection page after brief delay for visual feedback
-            setTimeout(function() {
-                window.location.href = 'index.html';
-            }, 300);
-        });
-    </script>
+</div>
+
+<script>
+/* ── CANVAS particles ── */
+const cvs = document.getElementById('cvs');
+const ctx = cvs.getContext('2d');
+
+function rs(){ cvs.width = innerWidth; cvs.height = innerHeight; }
+rs(); addEventListener('resize', rs);
+
+const pts = Array.from({length:52}, () => ({
+    x: Math.random() * innerWidth * .5,
+    y: Math.random() * innerHeight,
+    r: Math.random() * 1.3 + .2,
+    dx: (Math.random() - .5) * .28,
+    dy: (Math.random() - .5) * .28,
+    a: Math.random() * .5 + .08
+}));
+
+(function tick(){
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+    const g = ctx.createRadialGradient(cvs.width*.22, cvs.height*.55, 0, cvs.width*.22, cvs.height*.55, cvs.width*.38);
+    g.addColorStop(0, 'rgba(0,150,255,0.055)');
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+    pts.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(0,150,255,${p.a})`;
+        ctx.fill();
+        p.x += p.dx; p.y += p.dy;
+        if (p.x < 0 || p.x > cvs.width*.5) p.dx *= -1;
+        if (p.y < 0 || p.y > cvs.height) p.dy *= -1;
+    });
+
+    for (let i = 0; i < pts.length; i++) {
+        for (let j = i+1; j < pts.length; j++) {
+            const d = Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y);
+            if (d < 88) {
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(0,150,255,${.065*(1-d/88)})`;
+                ctx.lineWidth = .5;
+                ctx.moveTo(pts[i].x, pts[i].y);
+                ctx.lineTo(pts[j].x, pts[j].y);
+                ctx.stroke();
+            }
+        }
+    }
+    requestAnimationFrame(tick);
+})();
+
+/* ── NAV ── */
+function go() {
+    document.body.style.transition = 'opacity .4s ease';
+    document.body.style.opacity = '0';
+    setTimeout(() => { window.location.href = 'index.html'; }, 400);
+}
+</script>
 </body>
 </html>

@@ -21,7 +21,14 @@ def transcribe_drums(audio_path: str, output_dir: str):
     y, sr = librosa.load(audio_path, mono=True)
 
     print("[DRUM] Detecting onsets...")
-    onset_frames = librosa.onset.onset_detect(y=y, sr=sr, backtrack=False)
+    onset_frames = librosa.onset.onset_detect(
+        y=y,
+        sr=sr,
+        backtrack=False,
+        pre_max=20,
+        post_max=20,
+        delta=0.5
+    )
     onset_times = librosa.frames_to_time(onset_frames, sr=sr)
 
     print(f"[DRUM] Detected {len(onset_times)} drum hits")

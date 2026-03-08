@@ -7,7 +7,7 @@ import pretty_midi
 import numpy as np
 
 
-MIN_NOTE_DURATION = 0.08  # 80ms threshold for pitch smoothing
+MIN_NOTE_DURATION = 0.04  
 MERGE_THRESHOLD = 0.05    # 50ms gap threshold for duplicate merging
 
 

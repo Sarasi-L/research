@@ -2,6 +2,7 @@
 
 import pretty_midi
 
+# Mapping note names to MIDI key numbers
 NOTE_TO_NUM = {
     "C": 0,
     "C#": 1,
@@ -17,27 +18,47 @@ NOTE_TO_NUM = {
     "B": 11
 }
 
+
 def apply_key_to_midi(input_midi_path: str, key: str, mode: str, output_path: str):
     """
-    Apply key signature meta event to MIDI.
+    Apply key signature meta event to a MIDI file.
+
+    Parameters
+    ----------
+    input_midi_path : str
+        Path to the input MIDI file
+    key : str
+        Root note (C, C#, D, etc.)
+    mode : str
+        'major' or 'minor'
+    output_path : str
+        Path where the updated MIDI will be saved
     """
 
     print(f"\n[KEY] Applying key signature: {key} {mode}")
 
+    # Load MIDI
     midi = pretty_midi.PrettyMIDI(input_midi_path)
 
+    # Convert note name to number
     base_key_number = NOTE_TO_NUM.get(key, 0)
 
-    # 🔧 FIX: encode mode inside key_number
+    # Encode major/minor inside key_number
     if mode.lower() == "minor":
         key_number = base_key_number + 12
     else:
         key_number = base_key_number
 
-    key_sig = pretty_midi.KeySignature(key_number, time=0.0)
+    # Create key signature event
+    key_signature = pretty_midi.KeySignature(
+        key_number=key_number,
+        time=0.0
+    )
 
-    midi.key_signature_changes.append(key_sig)
+    # Add to MIDI
+    midi.key_signature_changes.append(key_signature)
 
+    # Save file
     midi.write(output_path)
 
     print(f"[KEY] ✓ Key signature applied and saved: {output_path}")

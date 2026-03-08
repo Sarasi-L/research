@@ -37,12 +37,15 @@ def detect_time_signature(audio_path: str, beat_times):
     mean_onsets = np.mean(onsets_per_beat)
 
     # Rules
-    if mean_onsets > 2.5:
+    # Most modern songs are 4/4
+    if mean_onsets > 3.2:
         print("[TIME] Time signature: 6/8")
         return 6, 8
-    elif 1.5 < mean_onsets <= 2.5:
+
+    elif 2.0 < mean_onsets <= 3.2:
         print("[TIME] Time signature: 3/4")
         return 3, 4
+
     else:
         print("[TIME] Time signature: 4/4 (default)")
         return 4, 4
