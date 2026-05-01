@@ -8,7 +8,7 @@ import soundfile as sf
 from demucs.pretrained import get_model
 from demucs.apply import apply_model
 
-from backend.services.utils.env_fix import fix_windows_conda
+from services.utils.env_fix import fix_windows_conda
 
 
 # Fix DLL issue (Windows + Conda)

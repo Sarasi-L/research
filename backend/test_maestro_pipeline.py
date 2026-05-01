@@ -22,9 +22,9 @@ from backend.services.polyphonic.export_musicxml import midi_to_musicxml
 # ============================================================
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-MAESTRO_DIR = PROJECT_ROOT / "valipoly" / "maestro"
-EVAL_OUTPUT_DIR = PROJECT_ROOT / "valipoly" / "eval_outputs"
-MAX_SONGS = 20
+MAESTRO_DIR = PROJECT_ROOT / "notation_sheet_validation" / "maestro"
+EVAL_OUTPUT_DIR = PROJECT_ROOT / "notation_sheet_validation" / "eval_outputs"
+MAX_SONGS = None
 
 
 # ============================================================

@@ -1,626 +1,1750 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Polyphonic Analysis Studio</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        * {
-            font-family: 'Inter', sans-serif;
-        }
+  <meta charset="UTF-8">
+  <title>NoteScribe — Polyphonic Analysis</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.8.9/build/opensheetmusicdisplay.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.27/build/Midi.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --bg:      #020221;
+      --bg2:     #07072e;
+      --surface: #07072e;
+      --surface2:#0d0d3a;
+      --surface3:#111840;
+      --blue:    #0096FF;
+      --blue2:   #38b6ff;
+      --bluedim: rgba(0,150,255,0.10);
+      --cyan:    #2dd4bf;
+      --green:   #22c55e;
+      --amber:   #f59e0b;
+      --purple:  #818cf8;
+      --pink:    #ec4899;
+      --red:     #ef4444;
+      --orange:  #fb923c;
+      --white:   #ffffff;
+      --muted:   rgba(255,255,255,0.42);
+      --muted2:  rgba(255,255,255,0.22);
+      --border:  rgba(0,150,255,0.12);
+      --border2: rgba(0,150,255,0.28);
+      --glow:    rgba(0,150,255,0.08);
+      --glow2:   rgba(0,150,255,0.16);
+      --mono:    'JetBrains Mono', monospace;
+      --sans:    'Outfit', sans-serif;
+    }
+    .sg-note { display:inline-block; margin:0 2px; }
 
-        body {
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
-        }
+    *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+    html,body { width:100vw; height:100vh; overflow:hidden; background:var(--bg); color:var(--white); font-family:var(--sans); font-size:13px; }
+    ::-webkit-scrollbar { width:4px; height:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(0,150,255,.22); border-radius:2px; }
 
-        .left-panel-bg {
-            background: url('assets/images/4.jpg') center/cover;
-            position: relative;
-        }
+    @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:.3} }
+    @keyframes spin    { to{transform:rotate(360deg)} }
+    @keyframes fadein  { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes slideup { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes wave    { 0%,100%{transform:scaleY(.25);opacity:.4} 50%{transform:scaleY(1);opacity:1} }
+    @keyframes pulse   { 0%,100%{box-shadow:0 0 0 0 rgba(0,150,255,.4)} 50%{box-shadow:0 0 0 6px rgba(0,150,255,0)} }
 
-        .left-panel-bg::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 0;
-        }
+    /* ── TITLEBAR ── */
+    .titlebar {
+      height:36px; background:rgba(2,2,33,.98);
+      border-bottom:1px solid rgba(255,255,255,.04);
+      display:flex; align-items:center; padding:0 16px;
+      flex-shrink:0; position:relative; z-index:200;
+    }
+    .tb-dots { display:flex; gap:6px; margin-right:16px; }
+    .tb-dot  { width:10px; height:10px; border-radius:50%; }
+    .tb-dot.close { background:#ef4444; }
+    .tb-dot.min   { background:#f59e0b; }
+    .tb-dot.max   { background:#22c55e; }
+    .tb-title  { font-family:var(--mono); font-size:11px; color:var(--muted); }
+    .tb-center { position:absolute; left:50%; transform:translateX(-50%); font-family:var(--mono); font-size:11px; color:var(--muted2); }
+    .tb-right  { margin-left:auto; display:flex; align-items:center; gap:7px; }
+    .tb-badge  { font-family:var(--mono); font-size:10px; padding:2px 8px; border-radius:3px; background:var(--bluedim); border:1px solid var(--border2); color:var(--blue2); }
+    .tb-poly   { font-family:var(--mono); font-size:10px; padding:2px 8px; border-radius:3px; background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.35); color:var(--amber); font-weight:700; letter-spacing:.5px; }
 
-        .left-panel-bg > * {
-            position: relative;
-            z-index: 1;
-        }
+    /* ── MENUBAR ── */
+    .menubar { height:32px; background:rgba(7,7,46,.97); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 16px; gap:2px; flex-shrink:0; }
+    .menu-item { padding:4px 12px; font-size:12px; color:var(--muted); cursor:pointer; border-radius:4px; transition:all .15s; }
+    .menu-item:hover { background:var(--glow); color:var(--white); }
+    .menu-sep  { width:1px; height:16px; background:var(--border); margin:0 4px; }
 
-        .right-panel-bg {
-            background: url('') center/cover;
-            position: relative;
-        }
+    /* ── NAV TABS ── */
+    .navtabs { height:42px; background:var(--bg2); border-bottom:1px solid var(--border); display:flex; align-items:stretch; padding:0 0 0 16px; flex-shrink:0; }
+    .nav-tab  { display:flex; align-items:center; gap:7px; padding:0 18px; font-size:12px; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; transition:all .2s; text-decoration:none; white-space:nowrap; }
+    .nav-tab:hover { color:var(--white); }
+    .nav-tab.active { color:var(--white); border-bottom-color:var(--blue); }
+    .nav-tab.locked { pointer-events:none; opacity:.35; }
+    .nav-tab .nt-num { font-family:var(--mono); font-size:9px; font-weight:700; padding:2px 5px; border-radius:3px; background:var(--glow); border:1px solid var(--border2); color:var(--blue2); }
+    .nav-tab.active .nt-num { background:var(--glow2); }
+    .nav-right { margin-left:auto; display:flex; align-items:center; gap:10px; padding-right:16px; }
+    .status-pill { display:flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10px; color:var(--muted); padding:3px 10px; border-radius:20px; border:1px solid var(--border); }
+    .status-dot { width:5px; height:5px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 2s ease-in-out infinite; }
 
-        .right-panel-bg::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 0;
-        }
+    /* ── SHELL ── */
+    .shell { display:grid; grid-template-columns:264px 1fr; height:calc(100vh - 42px); }
 
-        .right-panel-bg > * {
-            position: relative;
-            z-index: 1;
-        }
+    /* ── SIDEBAR ── */
+    .sidebar { background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+    .sb-head  { padding:14px 14px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .sb-label { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:7px; }
 
-        .glass-effect {
-            background: rgba(17, 17, 17, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 255, 0, 0.1);
-        }
+    .file-card { background:rgba(0,150,255,.07); border:1px solid var(--border2); border-radius:8px; padding:10px 12px; margin-bottom:10px; }
+    .fc-name   { font-size:12px; font-weight:700; color:var(--white); margin-bottom:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .fc-tags   { display:flex; gap:5px; align-items:center; }
+    .fc-tag    { font-family:var(--mono); font-size:9px; font-weight:700; padding:2px 7px; border-radius:3px; }
+    .fc-tag.poly { background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.35); color:var(--amber); }
+    .fc-tag.blue { background:var(--bluedim); border:1px solid var(--border2); color:var(--blue2); }
 
-        .stem-player {
-            background: linear-gradient(135deg, rgba(0, 255, 0, 0.03) 0%, rgba(0, 0, 0, 0.5) 100%);
-            border: 2px solid rgba(0, 255, 0, 0.2);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+    .run-btn {
+      width:100%; padding:10px; background:var(--blue); color:#fff;
+      font-family:var(--sans); font-weight:700; font-size:12px; letter-spacing:.8px; text-transform:uppercase;
+      border:none; border-radius:7px; cursor:pointer; transition:all .2s; margin-bottom:0;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+    }
+    .run-btn:hover:not(:disabled) { background:#0077cc; box-shadow:0 0 20px rgba(0,150,255,.45); }
+    .run-btn:disabled { opacity:.35; cursor:not-allowed; }
+    .run-spinner { width:13px; height:13px; border-radius:50%; border:2px solid rgba(255,255,255,.25); border-top-color:#fff; animation:spin 1s linear infinite; display:none; }
 
-        .stem-player:hover {
-            border-color: rgba(0, 255, 0, 0.5);
-            box-shadow: 0 8px 32px rgba(0, 255, 0, 0.2);
-            transform: translateY(-2px);
-        }
+    .sb-scroll { flex:1; overflow-y:auto; padding:14px; }
 
-        .stem-player.playing {
-            background: linear-gradient(135deg, rgba(0, 255, 0, 0.08) 0%, rgba(0, 255, 0, 0.03) 100%);
-            border-color: #00FF00;
-            box-shadow: 0 0 40px rgba(0, 255, 0, 0.4), inset 0 0 20px rgba(0, 255, 0, 0.1);
-        }
+    /* Pipeline steps */
+    .step-list { display:flex; flex-direction:column; gap:2px; margin-bottom:12px; }
+    .step-item {
+      display:flex; align-items:center; gap:8px;
+      padding:7px 9px; border-radius:5px; border:1px solid transparent;
+      transition:all .25s; font-size:11px; color:var(--muted);
+    }
+    .step-item.active { background:var(--glow); border-color:var(--border); color:var(--white); }
+    .step-item.done   { color:rgba(34,197,94,.9); }
+    .step-num  { width:18px; height:18px; border-radius:50%; border:1.5px solid var(--border2); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:8px; color:var(--muted); transition:all .25s; }
+    .step-item.active .step-num { border-color:var(--blue); color:var(--blue); }
+    .step-item.done   .step-num { border-color:var(--green); color:var(--green); background:rgba(34,197,94,.08); }
+    .step-spin-sm { width:12px; height:12px; border-radius:50%; border:2px solid var(--border2); border-top-color:var(--blue); animation:spin 1s linear infinite; display:none; flex-shrink:0; }
+    .step-item.active .step-spin-sm { display:block; }
+    .step-item.active .step-num    { display:none; }
+    .step-text { flex:1; line-height:1.3; }
+    .step-desc { font-size:9px; color:var(--muted2); font-family:var(--mono); margin-top:1px; }
 
-        .instrument-icon-large {
-            font-size: 120px;
-            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
-            transition: all 0.5s ease;
-        }
+    /* Sidebar summary */
+    .sb-divider { height:1px; background:var(--border); margin:10px 0; }
+    .sr-row  { display:flex; justify-content:space-between; align-items:center; padding:4px 0; }
+    .sr-lbl  { font-size:11px; color:var(--muted); }
+    .sr-val  { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--white); }
+    .sr-val.b { color:var(--blue2); }
+    .sr-val.g { color:var(--green); }
+    .sr-val.a { color:var(--amber); }
 
-        .instrument-icon-large.playing {
-            filter: drop-shadow(0 0 40px #00FF00);
-            animation: icon-glow 2s ease-in-out infinite;
-        }
+    /* Sidebar stem quick-access */
+    .sb-stem-btn {
+      display:flex; align-items:center; gap:8px; padding:7px 9px;
+      border-radius:6px; background:var(--glow); border:1px solid var(--border);
+      cursor:pointer; transition:all .2s; margin-bottom:4px;
+      font-size:11px; color:var(--muted2);
+    }
+    .sb-stem-btn:hover { border-color:var(--border2); color:var(--white); }
+    .sb-stem-btn.playing { border-color:rgba(0,150,255,.5); background:rgba(0,150,255,.12); color:var(--blue2); }
+    .sbs-icon  { font-size:14px; flex-shrink:0; }
+    .sbs-name  { font-family:var(--mono); font-size:10px; font-weight:700; text-transform:uppercase; flex:1; }
+    .sbs-led   { width:5px; height:5px; border-radius:50%; background:var(--border2); flex-shrink:0; }
+    .sb-stem-btn.playing .sbs-led { background:var(--blue2); box-shadow:0 0 5px var(--blue2); }
 
-        @keyframes icon-glow {
-            0%, 100% {
-                transform: scale(1);
-                filter: drop-shadow(0 0 40px #00FF00);
-            }
-            50% {
-                transform: scale(1.1);
-                filter: drop-shadow(0 0 60px #00FF00);
-            }
-        }
+    /* ── MAIN ── */
+    .main { background:var(--bg); display:flex; flex-direction:column; height:100%; overflow:hidden; }
 
-        .waveform-visualizer {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            height: 60px;
-            margin: 20px 0;
-        }
+    .page-header {
+      padding:10px 18px; border-bottom:1px solid var(--border);
+      background:rgba(7,7,46,.6);
+      display:flex; align-items:center; gap:14px; flex-shrink:0;
+    }
+    .ph-icon  { font-size:22px; flex-shrink:0; }
+    .ph-title { font-size:14px; font-weight:800; color:var(--white); }
+    .ph-sub   { font-size:11px; color:var(--muted2); margin-top:1px; }
+    .ph-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+    .ph-badge { font-family:var(--mono); font-size:10px; font-weight:700; padding:3px 10px; border-radius:4px; }
+    .ph-badge.poly { background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.3); color:var(--amber); }
+    .ph-badge.blue { background:var(--glow); border:1px solid var(--border2); color:var(--blue2); }
 
-        .wave-bar {
-            width: 4px;
-            background: linear-gradient(to top, #00FF00, rgba(0, 255, 0, 0.3));
-            border-radius: 2px;
-            transition: height 0.1s ease;
-        }
+    /* Inner tabs */
+    .inner-tabs { display:flex; align-items:stretch; padding:0 0 0 18px; border-bottom:1px solid var(--border); background:rgba(7,7,46,.4); flex-shrink:0; }
+    .inner-tab  {
+      padding:0 16px; height:38px; display:flex; align-items:center; gap:7px;
+      font-size:11.5px; font-weight:600; color:var(--muted);
+      cursor:pointer; border-bottom:2px solid transparent; transition:all .2s; white-space:nowrap;
+    }
+    .inner-tab:hover { color:var(--white); }
+    .inner-tab.active { color:var(--white); border-bottom-color:var(--blue); }
+    .it-badge { font-family:var(--mono); font-size:9px; padding:1px 5px; border-radius:3px; background:var(--glow); border:1px solid var(--border2); color:var(--blue2); }
 
-        .wave-bar.active {
-            animation: wave-pulse 0.8s ease-in-out infinite;
-        }
+    .tab-pane { display:none; flex:1; overflow:hidden; flex-direction:column; }
+    .tab-pane.active { display:flex; }
 
-        @keyframes wave-pulse {
-            0%, 100% { height: 20%; }
-            50% { height: 100%; }
-        }
+    /* ── IDLE / LOADING ── */
+    .idle-screen {
+      flex:1; display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:12px; text-align:center; padding:48px;
+    }
+    .idle-waveform { display:flex; align-items:center; gap:4px; height:40px; margin-bottom:6px; opacity:.2; }
+    .iw-bar { width:4px; border-radius:2px; background:var(--blue); }
+    .iw-bar:nth-child(1){height:12px} .iw-bar:nth-child(2){height:22px} .iw-bar:nth-child(3){height:36px}
+    .iw-bar:nth-child(4){height:28px} .iw-bar:nth-child(5){height:18px} .iw-bar:nth-child(6){height:36px}
+    .iw-bar:nth-child(7){height:12px}
+    .idle-title  { font-size:15px; font-weight:700; color:rgba(255,255,255,.35); }
+    .idle-sub    { font-size:11.5px; color:rgba(255,255,255,.18); max-width:340px; line-height:1.8; }
 
-        .custom-audio-controls {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 16px;
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 12px;
-            border: 1px solid rgba(0, 255, 0, 0.15);
-        }
+    .loading-screen {
+      flex:1; display:none; flex-direction:column;
+      align-items:center; justify-content:center; gap:14px; text-align:center; padding:48px;
+    }
+    .spin-ring { width:52px; height:52px; border-radius:50%; border:3px solid var(--border2); border-top-color:var(--blue); animation:spin 1s linear infinite; }
+    .loading-bars { display:flex; align-items:center; gap:3px; height:28px; }
+    .lb { width:3px; border-radius:2px; background:var(--blue); animation:wave 1s ease-in-out infinite; }
+    .lb:nth-child(1){height:10px;animation-delay:.0s} .lb:nth-child(2){height:18px;animation-delay:.1s}
+    .lb:nth-child(3){height:26px;animation-delay:.2s} .lb:nth-child(4){height:18px;animation-delay:.3s}
+    .lb:nth-child(5){height:10px;animation-delay:.4s}
+    .loading-title { font-size:14px; font-weight:700; color:rgba(255,255,255,.55); }
+    .loading-step  { font-family:var(--mono); font-size:11px; color:var(--blue2); min-height:16px; }
+    .loading-prog  { width:260px; height:3px; background:rgba(255,255,255,.07); border-radius:2px; overflow:hidden; }
+    .loading-fill  { height:100%; background:linear-gradient(90deg,var(--blue),var(--blue2)); border-radius:2px; width:0%; transition:width .6s ease; }
 
-        .play-button {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #00FF00, #00CC00);
-            border: none;
-            color: #000;
-            font-size: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 255, 0, 0.3);
-        }
+    /* ── STEMS TAB ── */
+    .stems-scroll { flex:1; overflow-y:auto; padding:14px 18px; display:flex; flex-direction:column; gap:10px; }
 
-        .play-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(0, 255, 0, 0.5);
-        }
+    /* Pipeline banner */
+    .pipeline-banner {
+      display:flex; align-items:center; gap:14px;
+      padding:12px 16px; border-radius:9px;
+      border:1px solid var(--border2); background:rgba(0,150,255,.06);
+      flex-shrink:0; animation:fadein .35s ease;
+    }
+    .pb-icon  { font-size:26px; flex-shrink:0; }
+    .pb-body  { flex:1; min-width:0; }
+    .pb-title { font-size:13px; font-weight:700; color:var(--white); margin-bottom:2px; }
+    .pb-sub   { font-size:11px; color:var(--muted); }
+    .pb-badge { font-family:var(--mono); font-size:10px; font-weight:700; padding:4px 12px; border-radius:5px; text-transform:uppercase; flex-shrink:0; }
+    .pb-badge.piano { background:rgba(0,150,255,.12); border:1px solid rgba(0,150,255,.35); color:var(--blue2); }
+    .pb-badge.multi { background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.35); color:var(--amber); }
 
-        .play-button:active {
-            transform: scale(0.95);
-        }
+    /* Stats strip */
+    .stat-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; flex-shrink:0; animation:fadein .35s ease .05s both; }
+    .stat-box   { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 13px; }
+    .stat-val   { font-family:var(--mono); font-size:20px; font-weight:700; line-height:1; margin-bottom:3px; color:var(--blue2); }
+    .stat-val.g { color:var(--green); }
+    .stat-val.a { color:var(--amber); }
+    .stat-val.p { color:var(--purple); }
+    .stat-lbl   { font-family:var(--mono); font-size:9px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); }
 
-        .progress-container {
-            flex: 1;
-            height: 6px;
-            background: rgba(0, 255, 0, 0.1);
-            border-radius: 3px;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
+    /* Stem card */
+    .stem-card {
+      background:var(--surface2); border:1px solid var(--border);
+      border-radius:10px; overflow:hidden; flex-shrink:0;
+      transition:border-color .2s; animation:slideup .3s ease both;
+    }
+    .stem-card:hover  { border-color:var(--border2); }
+    .stem-card.active { border-color:rgba(0,150,255,.5); background:rgba(0,150,255,.04); }
 
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #00FF00, #00CC00);
-            border-radius: 3px;
-            transition: width 0.1s linear;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-        }
+    .sc-head { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); }
+    .sc-icon { width:42px; height:42px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; border:1px solid; }
+    .sc-info { flex:1; min-width:0; }
+    .sc-name { font-family:var(--mono); font-size:13px; font-weight:700; text-transform:uppercase; margin-bottom:4px; }
+    .sc-badges { display:flex; gap:5px; flex-wrap:wrap; }
+    .sc-instr  { font-family:var(--mono); font-size:9px; font-weight:700; padding:2px 7px; border-radius:3px; background:rgba(0,150,255,.1); border:1px solid rgba(0,150,255,.25); color:var(--blue2); }
+    .sc-status { font-family:var(--mono); font-size:10px; color:var(--muted); flex-shrink:0; transition:color .2s; }
+    .stem-card.active .sc-status { color:var(--blue2); }
 
-        .time-display {
-            font-size: 12px;
-            color: white;
-            font-weight: 500;
-            min-width: 80px;
-            text-align: center;
-        }
+    /* Instrument confidence mini-bars */
+    .sc-conf-row { display:flex; align-items:center; gap:8px; padding:7px 16px; border-bottom:1px solid var(--border); }
+    .scr-name    { font-size:11px; color:var(--muted2); width:72px; font-weight:600; }
+    .scr-track   { flex:1; height:3px; background:rgba(255,255,255,.06); border-radius:2px; overflow:hidden; }
+    .scr-fill    { height:100%; border-radius:2px; }
+    .scr-pct     { font-family:var(--mono); font-size:10px; color:var(--blue2); width:30px; text-align:right; }
 
-        .volume-control {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+    /* Player row */
+    .sc-player { display:flex; align-items:center; gap:12px; padding:11px 16px; }
+    .play-btn   {
+      width:36px; height:36px; border-radius:50%; flex-shrink:0;
+      border:none; cursor:pointer; font-size:12px;
+      display:flex; align-items:center; justify-content:center;
+      transition:all .2s; color:#fff;
+    }
+    .play-btn:hover { filter:brightness(1.2); box-shadow:0 0 14px rgba(0,150,255,.5); }
+    .stem-card.active .play-btn { animation:pulse 2s ease-in-out infinite; }
 
-        .volume-slider {
-            width: 80px;
-            height: 4px;
-            background: rgba(0, 255, 0, 0.2);
-            border-radius: 2px;
-            cursor: pointer;
-            position: relative;
-        }
+    .player-mid  { flex:1; display:flex; flex-direction:column; gap:5px; }
+    .prog-track  { height:4px; background:rgba(255,255,255,.07); border-radius:2px; overflow:hidden; cursor:pointer; position:relative; }
+    .prog-fill   { height:100%; width:0%; border-radius:2px; transition:width .1s linear; pointer-events:none; }
+    .time-row    { display:flex; justify-content:space-between; font-family:var(--mono); font-size:9px; color:var(--muted); }
 
-        .volume-level {
-            height: 100%;
-            background: #00FF00;
-            border-radius: 2px;
-            transition: width 0.1s;
-        }
+    .vol-row { display:flex; align-items:center; gap:5px; width:80px; }
+    .vol-icon { font-size:11px; color:var(--muted); }
+    input[type=range].vol-slider {
+      width:52px; height:3px; -webkit-appearance:none; appearance:none;
+      background:rgba(255,255,255,.1); border-radius:2px; cursor:pointer; outline:none;
+    }
+    input[type=range].vol-slider::-webkit-slider-thumb {
+      -webkit-appearance:none; width:10px; height:10px; border-radius:50%; background:var(--blue2);
+    }
 
-        .back-button {
-            position: fixed;
-            bottom: 30px;
-            left: 30px;
-            z-index: 1001;
-            padding: 12px 24px;
-            background: rgba(0, 255, 0, 0.1);
-            backdrop-filter: blur(10px);
-            color: #00FF00;
-            border: 2px solid #00FF00;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
-        }
+    /* ── NOTATION TAB ── */
+    .notation-pane { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+    .nt-toolbar { display:flex; align-items:center; gap:10px; padding:10px 18px; border-bottom:1px solid var(--border); flex-shrink:0; background:rgba(7,7,46,.4); }
+    .nt-title  { font-size:12px; font-weight:700; color:var(--white); }
+    .nt-sub    { font-size:11px; color:var(--muted); margin-top:1px; }
+    .nt-right  { margin-left:auto; display:flex; align-items:center; gap:7px; }
+    .btn-sm    {
+      padding:5px 12px; border-radius:5px; font-size:10px; font-weight:700;
+      letter-spacing:.4px; text-transform:uppercase; cursor:pointer; transition:all .15s;
+      text-decoration:none; display:inline-flex; align-items:center; gap:4px; font-family:var(--sans); border:none;
+    }
+    .btn-solid   { background:var(--blue); color:#fff; }
+    .btn-solid:hover { background:#0077cc; }
+    .btn-outline2 { background:transparent; color:var(--muted); border:1px solid var(--border); }
+    .btn-outline2:hover { border-color:var(--border2); color:var(--white); }
 
-        .back-button:hover {
-            background: #00FF00;
-            color: #000000;
-            transform: translateX(-5px);
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
-        }
+    .sheet-wrap  { flex:1; background:#f8f8f8; overflow:auto; }
+    .sheet-inner { padding:20px 28px; min-height:100%; }
+    #sheetContainer { min-height:120px; }
 
-        .scrollbar-custom::-webkit-scrollbar {
-            width: 8px;
-        }
+    .notation-idle { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center; padding:40px; }
+    .ni-icon  { font-size:38px; opacity:.2; }
+    .ni-title { font-size:13px; font-weight:700; color:rgba(0,0,0,.3); }
+    .ni-sub   { font-size:11px; color:rgba(0,0,0,.2); max-width:300px; line-height:1.7; }
 
-        .scrollbar-custom::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.2);
-        }
+    /* ── SARGAM TAB ── */
+    .sargam-scroll { flex:1; overflow-y:auto; padding:18px 20px; }
+    .sargam-head   { margin-bottom:14px; }
+    .sargam-hl-title { font-size:13px; font-weight:700; color:var(--white); margin-bottom:3px; }
+    .sargam-hl-sub   { font-size:11px; color:var(--muted); }
 
-        .scrollbar-custom::-webkit-scrollbar-thumb {
-            background: rgba(0, 255, 0, 0.3);
-            border-radius: 4px;
-        }
+    .sargam-stat-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px; }
 
-        .scrollbar-custom::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 255, 0, 0.5);
-        }
+    /* Main notation card — dark parchment feel */
+    .sargam-card {
+      background: linear-gradient(145deg, #0a0a2e, #0d0d3a);
+      border: 1px solid rgba(0,150,255,0.2);
+      border-radius: 14px;
+      padding: 10px 6px;
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.4);
+    }
 
-        .badge {
-            background: rgba(0, 255, 0, 0.15);
-            border: 1px solid rgba(0, 255, 0, 0.3);
-        }
-    </style>
+    /* Each row = one line of sargam */
+    .sg-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2px 0px;
+      padding: 8px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      min-height: 52px;
+      position: relative;
+    }
+    .sg-line:last-child { border-bottom: none; }
+
+    /* Line number gutter */
+    .sg-line-num {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: rgba(255,255,255,0.12);
+      width: 20px;
+      flex-shrink: 0;
+      padding-top: 3px;
+      align-self: flex-start;
+    }
+
+    /* Each syllable chip */
+    .sg-syllable {
+      font-family: var(--mono);
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      display: inline-flex;
+      align-items: flex-start;
+      justify-content: center;
+      min-width: 38px;
+      padding: 4px 5px 2px;
+      border-radius: 6px;
+      margin: 2px 1px;
+      position: relative;
+      transition: transform 0.1s;
+      cursor: default;
+      background: rgba(255,255,255,0.035);
+      border-bottom: 2px solid currentColor;
+      text-shadow: 0 0 12px currentColor;
+    }
+    .sg-syllable:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.07);
+      z-index: 2;
+    }
+
+    /* Octave superscript */
+    .sg-oct {
+      font-size: 8px;
+      font-weight: 700;
+      position: absolute;
+      top: 2px;
+      right: 3px;
+      opacity: 0.75;
+      letter-spacing: 0;
+      line-height: 1;
+    }
+
+    /* Bar separator */
+    .sg-bar {
+      color: rgba(0,150,255,0.35);
+      font-size: 28px;
+      font-weight: 200;
+      margin: 0 6px;
+      align-self: center;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+/* Legend */
+.sargam-legend { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+.sl-item { display:flex; align-items:center; gap:5px; font-size:10.5px; color:var(--muted); }
+.sl-dot  { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+
+    /* placeholder state */
+    .empty-state { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center; padding:40px; }
+    .es-icon  { font-size:36px; opacity:.2; }
+    .es-title { font-size:13px; font-weight:700; color:rgba(255,255,255,.3); }
+    .es-sub   { font-size:11px; color:rgba(255,255,255,.18); max-width:300px; line-height:1.7; }
+
+    /* Error banner */
+    .error-banner {
+      display:flex; align-items:center; gap:12px; padding:12px 16px;
+      border-radius:8px; border:1px solid rgba(239,68,68,.35);
+      background:rgba(239,68,68,.08); margin-bottom:10px; flex-shrink:0;
+    }
+    .eb-icon  { font-size:18px; flex-shrink:0; }
+    .eb-body  { flex:1; font-size:11px; color:rgba(255,180,180,.9); line-height:1.5; }
+    .eb-title { font-weight:700; color:#ef4444; margin-bottom:2px; }
+
+    /* ── OSMD Cursor highlight ── */
+    #sheetContainer svg .osmd-cursor {
+      opacity: 0.65 !important;
+      fill: #0096FF !important;
+      filter: drop-shadow(0 0 8px rgba(0,150,255,0.7));
+    }
+    /* Smooth scroll on the sheet container */
+    #sheetContainer {
+      scroll-behavior: smooth;
+    }
+  </style>
 </head>
-<body class="h-screen overflow-hidden">
+<body>
 
-<div class="flex h-screen">
-    <!-- Left Panel - Stems (50% width) -->
-    <div class="w-1/2 left-panel-bg flex flex-col border-r border-green-500/20">
-        <!-- Header -->
-        <div class="p-8 border-b border-green-500/20">
-            <div class="flex items-center space-x-4 mb-3">
-                
-                <div>
-                    <h1 class="text-3xl font-bold" style="color: white;">Polyphonic Transcription</h1>
-                    <p class="text-sm" style="color: white; opacity: 0.7;">Professional Stem Separation & Analysis</p>
-                </div>
-            </div>
-        </div>
 
-        <!-- Control Panel -->
-        <div class="p-8 border-b border-green-500/20">
-            <button id="analyzeBtn" 
-                    class="w-full text-black font-semibold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-3 text-lg"
-                    style="background: #00FF00; box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);">
-                <span class="text-2xl">▶</span>
-                <span>Separate Audio Stems</span>
-            </button>
 
-            <div id="status" class="hidden mt-6 p-4 rounded-xl glass-effect border border-green-500/30 text-center">
-                <div class="flex items-center justify-center space-x-3">
-                    <div class="w-3 h-3 rounded-full animate-pulse" style="background: #00FF00;"></div>
-                    <span id="statusText" class="font-medium text-lg" style="color: #00FF00;"></span>
-                </div>
-            </div>
-        </div>
 
-        <!-- Stems List -->
-        <div id="stemsContainer" class="flex-1 overflow-y-auto scrollbar-custom p-8 space-y-6">
-            <!-- Stems will be populated here -->
-        </div>
-    </div>
 
-    <!-- Right Panel - Visualization (50% width) -->
-    <div class="w-1/2 right-panel-bg flex flex-col">
-        <!-- Top Bar -->
-        <div class="glass-effect border-b border-green-500/20 p-8">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-2xl font-semibold" style="color: white;">Live Visualization</h2>
-                    <p class="text-sm mt-2" style="color: white; opacity: 0.7;">Real-time audio stem display</p>
-                </div>
-                <div id="currentStemBadge" class="hidden px-6 py-3 rounded-full badge">
-                    <span class="text-sm font-medium" style="color: #00FF00;">● PLAYING</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Visualization Area -->
-        <div class="flex-1 flex flex-col items-center justify-center p-12 relative overflow-hidden">
-            <!-- Background Effect -->
-            <div class="absolute inset-0 opacity-5">
-                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border-2 border-green-500"></div>
-                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-green-500"></div>
-                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-green-500"></div>
-            </div>
-
-            <!-- Main Icon Display -->
-            <div class="relative z-10 text-center">
-                <div id="visualizerIcon" class="instrument-icon-large mb-8">
-                    <span id="iconDisplay">🎼</span>
-                </div>
-                
-                <h3 id="stemTitle" class="text-3xl font-bold mb-4" style="color: white;">Ready to Analyze</h3>
-                <p id="stemSubtitle" class="text-lg" style="color: white; opacity: 0.7;">Select "Separate Audio Stems" to begin processing</p>
-
-                <!-- Waveform Visualizer -->
-                <div id="waveformContainer" class="hidden waveform-visualizer mt-8">
-                    <div class="wave-bar" style="animation-delay: 0s;"></div>
-                    <div class="wave-bar" style="animation-delay: 0.1s;"></div>
-                    <div class="wave-bar" style="animation-delay: 0.2s;"></div>
-                    <div class="wave-bar" style="animation-delay: 0.3s;"></div>
-                    <div class="wave-bar" style="animation-delay: 0.4s;"></div>
-                    <div class="wave-bar" style="animation-delay: 0.5s;"></div>
-                    <div class="wave-bar" style="animation-delay: 0.4s;"></div>
-                    <div class="wave-bar" style="animation-delay: 0.3s;"></div>
-                    <div class="wave-bar" style="animation-delay: 0.2s;"></div>
-                    <div class="wave-bar" style="animation-delay: 0.1s;"></div>
-                </div>
-
-                <!-- Instruments Detected -->
-                <div id="instrumentsList" class="hidden mt-8 flex flex-wrap gap-3 justify-center">
-                    <!-- Instrument badges will appear here -->
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- ── NAV TABS ── -->
+<div class="navtabs">
+  <a class="nav-tab" href="index.html"><span class="nt-num">01</span> Upload &amp; Detect</a>
+  <a class="nav-tab locked" href="#"><span class="nt-num">02</span> Monophonic Analysis</a>
+  <a class="nav-tab active" href="#"><span class="nt-num">03</span> Polyphonic Analysis</a>
+  <div class="nav-right">
+    <div class="status-pill"><div class="status-dot"></div> System Ready</div>
+  </div>
 </div>
 
-<!-- Back Button (Bottom Left) -->
-<button class="back-button" id="backBtn">
-    <span class="text-xl">←</span>
-    <span>Back to Selection</span>
-</button>
+<!-- ── SHELL ── -->
+<div class="shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="sb-label">Source Audio</div>
+      <div class="file-card">
+        <div class="fc-name" id="sideFileName">No file loaded</div>
+        <div class="fc-tags">
+          <span class="fc-tag poly">POLYPHONIC</span>
+          <span class="fc-tag blue" id="fcStemCount" style="display:none">0 STEMS</span>
+        </div>
+      </div>
+      <button class="run-btn" id="analyzeBtn">
+        <div class="run-spinner" id="runSpinner"></div>
+        <span id="runBtnText">▶ Separate &amp; Analyze</span>
+      </button>
+    </div>
+
+    <div class="sb-scroll">
+      <div class="sb-label">Audio Intelligence Pipeline</div>
+      <div class="step-list" id="stepList">
+        <div class="step-item" id="st1">
+          <div class="step-num">1</div><div class="step-spin-sm"></div>
+          <div class="step-text"><div>Stem Separation</div><div class="step-desc">4-stem split</div></div>
+        </div>
+        <div class="step-item" id="st2">
+          <div class="step-num">2</div><div class="step-spin-sm"></div>
+          <div class="step-text"><div>Instrument Detection</div><div class="step-desc">Per-stem classification</div></div>
+        </div>
+        <div class="step-item" id="st3">
+          <div class="step-num">3</div><div class="step-spin-sm"></div>
+          <div class="step-text"><div>Detection Check</div><div class="step-desc">Route to multi pipeline</div></div>
+        </div>
+        <div class="step-item" id="st4">
+          <div class="step-num">4</div><div class="step-spin-sm"></div>
+          <div class="step-text"><div>Transcription Pipeline</div><div class="step-desc">AMT roll extraction</div></div>
+        </div>
+        <div class="step-item" id="st5">
+          <div class="step-num">5</div><div class="step-spin-sm"></div>
+          <div class="step-text"><div>Notation Generation</div><div class="step-desc">Multi-instrument score export</div></div>
+        </div>
+        <div class="step-item" id="st6">
+          <div class="step-num">6</div><div class="step-spin-sm"></div>
+          <div class="step-text"><div>Sargam Notation Conversion</div><div class="step-desc">Indian classical syllable map</div></div>
+        </div>
+      </div>
+
+      <!-- Post-run summary (hidden until done) -->
+      <div id="sbSummary" style="display:none">
+        <div class="sb-divider"></div>
+        <div class="sb-label">Result Summary</div>
+        <div class="sr-row"><span class="sr-lbl">Pipeline</span><span class="sr-val a" id="srPipeline">—</span></div>
+        <div class="sr-row"><span class="sr-lbl">Stems</span><span class="sr-val b" id="srStems">—</span></div>
+        <div class="sr-row"><span class="sr-lbl">Instruments</span><span class="sr-val" id="srInstrs">—</span></div>
+        <div class="sr-row"><span class="sr-lbl">Notation</span><span class="sr-val g" id="srNotation">—</span></div>
+        <div class="sb-divider"></div>
+        <div class="sb-label">Quick Play</div>
+        <div id="sbStemsNav"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div class="ph-icon"></div>
+      <div>
+        <div class="ph-title">Polyphonic Analysis Studio</div>
+        <div class="ph-sub">Stem separation · instrument detection · notation generation</div>
+      </div>
+      <div class="ph-right" id="phRight" style="display:none">
+        <span class="ph-badge blue" id="phStemBadge">—</span>
+        <span class="ph-badge poly" id="phPipelineBadge">—</span>
+      </div>
+    </div>
+
+    <!-- Inner tabs -->
+    <div class="inner-tabs">
+      <div class="inner-tab active" id="itab1" onclick="switchInnerTab('stems')">
+        Separated Stems <span class="it-badge" id="stemCountBadge">0</span>
+      </div>
+      <div class="inner-tab" id="itab2" onclick="switchInnerTab('notation')">
+        Sheet Music Notation
+      </div>
+      <div class="inner-tab" id="itab3" onclick="switchInnerTab('sargam')">
+        Sargam Notation
+      </div>
+    </div>
+
+    <!-- ══ TAB: STEMS ══ -->
+    <div class="tab-pane active" id="tab-stems">
+
+      <!-- IDLE -->
+      <div class="idle-screen" id="idleState">
+        <div class="idle-waveform">
+          <div class="iw-bar"></div><div class="iw-bar"></div><div class="iw-bar"></div>
+          <div class="iw-bar"></div><div class="iw-bar"></div><div class="iw-bar"></div>
+          <div class="iw-bar"></div>
+        </div>
+        <div class="idle-title">Waiting for analysis</div>
+        <div class="idle-sub">Click "Separate &amp; Analyze" to begin. Demucs will split the audio into drums, bass, vocals and other stems — each playable separately — then run instrument detection and generate a full musical score.</div>
+      </div>
+
+      <!-- LOADING -->
+      <div class="loading-screen" id="loadingState">
+        <div class="spin-ring"></div>
+        <div class="loading-title">Processing polyphonic audio…</div>
+        <div class="loading-step" id="loadingStep">Initializing…</div>
+        <div class="loading-bars">
+          <div class="lb"></div><div class="lb"></div><div class="lb"></div>
+          <div class="lb"></div><div class="lb"></div>
+        </div>
+        <div class="loading-prog"><div class="loading-fill" id="loadingFill"></div></div>
+      </div>
+
+      <!-- RESULTS: stem cards -->
+      <div class="stems-scroll" id="stemsScroll" style="display:none">
+        <!-- pipeline-banner, stat-strip, stem cards injected by JS -->
+      </div>
+
+    </div>
+
+  
+    <!-- ══ TAB: NOTATION ══ -->
+    <div class="tab-pane" id="tab-notation">
+      <div class="notation-pane">
+        <div class="nt-toolbar">
+          <div>
+            <div class="nt-title" id="ntTitle">Sheet Music Notation</div>
+            <div class="nt-sub"  id="ntSub">Run analysis to generate sheet music</div>
+          </div>
+          <div class="nt-right">
+            <button class="btn-sm btn-solid" id="playMidiBtn" style="display:none">▶ Play Score</button>
+            <a href="#" class="btn-sm btn-outline2" id="dlXmlView" target="_blank" style="display:none">↗ View XML</a>
+            <button class="btn-sm btn-solid" id="dlXmlDown" style="display:none">⬇ Download PDF</button>
+          </div>
+        </div>
+
+        <!-- IDLE (shown before analysis) -->
+        <div class="notation-idle" id="notationIdle" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:40px;">
+          <div class="ni-icon">🎵</div>
+          <div class="ni-title">No notation generated yet</div>
+          <div class="ni-sub">Complete the stem analysis to render an interactive sheet music score here.</div>
+        </div>
+
+        <!-- OSMD renders directly into this div — no extra wrapper -->
+        <div id="sheetContainer" style="display:none; background:#ffffff; padding:20px 28px; flex:1; overflow:auto; min-height:0;"></div>
+
+      </div>
+    </div>
+
+    <!-- ══ TAB: SARGAM ══ -->
+    <div class="tab-pane" id="tab-sargam">
+      <div class="sargam-scroll" id="sargamScroll">
+
+        <!-- IDLE -->
+        <div class="empty-state" id="sargamIdle">
+          <div class="es-icon">🎶</div>
+          <div class="es-title">No Sargam generated yet</div>
+          <div class="es-sub">Complete the stem analysis to render Sargam (Indian classical syllable) notation here.</div>
+        </div>
+
+        <!-- CONTENT (hidden until run) -->
+        <div id="sargamContent" style="display:none">
+          <div class="sargam-head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+            <div>
+              <div class="sargam-hl-title">Sargam Notation — Indian Classical System</div>
+              <div class="sargam-hl-sub">Sa Re Ga Ma Pa Dha Ni · pitch syllables transcribed from detected frequencies</div>
+            </div>
+            <button class="btn-sm btn-solid" id="dlSargamPdf" style="flex-shrink:0;margin-top:2px;">⬇ Download PDF</button>
+          </div>
+          <div class="sargam-stat-strip" id="sargamStats"></div>
+          <div class="sargam-card" id="sargamText"></div>
+          <div class="sargam-legend">
+            <div class="sl-item"><div class="sl-dot" style="background:#0096FF"></div> Sa — C (Root/Shadja)</div>
+            <div class="sl-item"><div class="sl-dot" style="background:#2dd4bf"></div> Re — D (Rishabha)</div>
+            <div class="sl-item"><div class="sl-dot" style="background:#818cf8"></div> Ga — E (Gandhara)</div>
+            <div class="sl-item"><div class="sl-dot" style="background:#f59e0b"></div> Ma — F (Madhyama)</div>
+            <div class="sl-item"><div class="sl-dot" style="background:#22c55e"></div> Pa — G (Panchama)</div>
+            <div class="sl-item"><div class="sl-dot" style="background:#ef4444"></div> Dha — A (Dhaivata)</div>
+            <div class="sl-item"><div class="sl-dot" style="background:#ec4899"></div> Ni — B (Nishada)</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div><!-- /shell -->
 
 <script>
-    document.getElementById("backBtn").addEventListener("click", () => {
-        document.body.style.opacity = "0.7";
-        document.body.style.transition = "opacity 0.3s ease";
-        setTimeout(() => {
-            window.location.href = "index.html";
-        }, 300);
+// ── STATE ──
+const urlFile = new URLSearchParams(location.search).get('file');
+let analysisResult = null;
+let audioPlayers   = {};
+let currentPlaying = null;
+const BASE_URL     = 'http://127.0.0.1:8000';
+
+let notationXMLUrl = null;
+let osmdInstance = null;
+
+let midiUrl = null;
+let midiPlayer = null;
+
+// Accent colors per stem
+const STEM_COLORS = {
+  drums:  { col:'#f59e0b', bg:'rgba(245,158,11,.1)',  border:'rgba(245,158,11,.3)'  },
+  bass:   { col:'#22c55e', bg:'rgba(34,197,94,.1)',   border:'rgba(34,197,94,.3)'   },
+  vocals: { col:'#ec4899', bg:'rgba(236,72,153,.1)',  border:'rgba(236,72,153,.3)'  },
+  other:  { col:'#818cf8', bg:'rgba(129,140,248,.1)', border:'rgba(129,140,248,.3)' },
+  piano:  { col:'#0096FF', bg:'rgba(0,150,255,.1)',   border:'rgba(0,150,255,.3)'   },
+};
+const STEM_ICONS   = { drums:'🥁', bass:'🎸', vocals:'🎤', other:'🎹', piano:'🎹' };
+const DEFAULT_THEME = { col:'#38b6ff', bg:'rgba(56,182,255,.1)', border:'rgba(56,182,255,.3)' };
+
+const STEP_MESSAGES = [
+  'Running Demucs stem separation…',
+  'Detecting instruments per stem…',
+  'Checking for piano-only source…',
+  'Running transcription pipeline…',
+  'Generating MusicXML score…',
+  'Building Sargam notation…',
+];
+
+// ── INIT ──
+document.getElementById('sideFileName').textContent = urlFile || 'No file loaded';
+
+// ── INNER TAB SWITCH ──
+function switchInnerTab(name) {
+
+  const map = { stems:'1', notation:'2', sargam:'3' };
+
+  ['stems','notation','sargam'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===name);
+    document.getElementById('itab'+map[t]).classList.toggle('active', t===name);
+  });
+
+  // Render OSMD ONLY when notation tab becomes visible
+  if (name === 'notation' && notationXMLUrl && !osmdInstance) {
+
+    setTimeout(() => {
+      renderMusicXML(notationXMLUrl);
+    }, 200);
+
+  }
+}
+
+// ── PIPELINE STEP HELPERS ──
+function setStep(n, state) {
+  const el = document.getElementById('st'+n);
+  el.classList.remove('active','done');
+  if (state) el.classList.add(state);
+}
+function setStepsUpTo(n) {
+  for (let i = 1; i <= 6; i++) {
+    if      (i < n)  setStep(i, 'done');
+    else if (i === n) setStep(i, 'active');
+    else              setStep(i, '');
+  }
+}
+function allStepsDone() {
+  for (let i = 1; i <= 6; i++) setStep(i, 'done');
+}
+
+// ── SHOW ERROR BANNER ──
+function showErrorBanner(message) {
+  const ss = document.getElementById('stemsScroll');
+  ss.style.display = 'flex';
+  ss.style.flexDirection = 'column';
+  ss.innerHTML = `
+    <div class="error-banner">
+      <div class="eb-icon">⚠️</div>
+      <div class="eb-body">
+        <div class="eb-title">Analysis Failed</div>
+        ${message}
+      </div>
+    </div>`;
+}
+
+// ── ANALYZE ──
+document.getElementById('analyzeBtn').onclick = async () => {
+  if (!urlFile) {
+    alert('No audio file specified. Return to Upload & Detect.');
+    return;
+  }
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  document.getElementById('runSpinner').style.display = 'block';
+  document.getElementById('runBtnText').textContent = 'Analyzing…';
+
+  // Reset UI
+  document.getElementById('idleState').style.display    = 'none';
+  document.getElementById('stemsScroll').style.display  = 'none';
+  const ls = document.getElementById('loadingState');
+  ls.style.display = 'flex';
+  ls.style.flexDirection = 'column';
+  document.getElementById('loadingFill').style.width = '0%';
+
+  // Reset notation tab
+  // Reset notation tab
+  document.getElementById('notationIdle').style.display  = 'flex';
+  document.getElementById('sheetContainer').style.display = 'none';
+  document.getElementById('sheetContainer').innerHTML = '';
+  document.getElementById('dlXmlView').style.display  = 'none';
+  document.getElementById('dlXmlDown').style.display  = 'none';
+  document.getElementById('playMidiBtn').style.display = 'none';
+  // ✅ Reset these so new analysis renders fresh
+  osmdInstance   = null;
+  notationXMLUrl = null;
+  midiUrl        = null;
+
+  // Reset sargam tab
+  document.getElementById('sargamIdle').style.display    = 'block';
+  document.getElementById('sargamContent').style.display = 'none';
+
+  // Animate pipeline steps
+  let stepIdx = 0;
+  const progStep = 100 / 6;
+  const stepInterval = setInterval(() => {
+    if (stepIdx < 6) {
+      setStepsUpTo(stepIdx + 1);
+      document.getElementById('loadingStep').textContent = STEP_MESSAGES[stepIdx];
+      document.getElementById('loadingFill').style.width = ((stepIdx + 1) * progStep) + '%';
+      stepIdx++;
+    }
+  }, 900);
+
+  try {
+    const res = await fetch(
+      `${BASE_URL}/analyze/polyphonic/?filename=${encodeURIComponent(urlFile)}`,
+      { method: 'POST' }
+    );
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Server error ${res.status}: ${errText}`);
+    }
+
+    analysisResult = await res.json();
+
+    clearInterval(stepInterval);
+    allStepsDone();
+    document.getElementById('loadingFill').style.width = '100%';
+    document.getElementById('loadingStep').textContent = 'Analysis complete ✓';
+
+    // Cache result safely
+    try {
+      localStorage.setItem('polyphonicAnalysis', JSON.stringify(analysisResult));
+      localStorage.setItem('polyphonicFile', urlFile);
+    } catch(e) { /* storage not available */ }
+
+    setTimeout(() => {
+      document.getElementById('loadingState').style.display = 'none';
+      renderResults(analysisResult);
+    }, 500);
+
+  } catch (err) {
+    clearInterval(stepInterval);
+    console.error('[Analysis error]', err);
+    document.getElementById('loadingState').style.display = 'none';
+    showErrorBanner(err.message);
+    btn.disabled = false;
+    document.getElementById('runSpinner').style.display = 'none';
+    document.getElementById('runBtnText').textContent = '▶ Separate & Analyze';
+  }
+};
+
+// ── RENDER RESULTS ──
+function renderResults(result) {
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = false;
+  document.getElementById('runSpinner').style.display = 'none';
+  document.getElementById('runBtnText').textContent = '↺ Re-analyze';
+
+  document.getElementById('loadingState').style.display = 'none';
+
+  const ss = document.getElementById('stemsScroll');
+  ss.style.display = 'flex';
+  ss.style.flexDirection = 'column';
+  ss.innerHTML = '';
+  audioPlayers = {};
+
+  const stemNames   = Object.keys(result.stems || {});
+  const allInstrs   = [];
+  Object.values(result.instruments || {}).forEach(arr =>
+    arr.forEach(i => { const n = i.instrument || i.instrument_name || ''; if (n) allInstrs.push(n); })
+  );
+  const uniqueInstrs = [...new Set(allInstrs)];
+  const isPiano      = !!result.piano_only;
+
+  // ── Header badges ──
+  // ── Header badges ──
+  const phRight = document.getElementById('phRight');
+  if (phRight) phRight.style.display = 'flex';
+  const phStemBadge = document.getElementById('phStemBadge');
+  if (phStemBadge) phStemBadge.textContent = stemNames.length + ' stems';
+  const phPipelineBadge = document.getElementById('phPipelineBadge');
+  if (phPipelineBadge) phPipelineBadge.textContent = isPiano ? 'Piano Pipeline' : 'Multi-Instrument';
+  const stemCountBadge = document.getElementById('stemCountBadge');
+  if (stemCountBadge) stemCountBadge.textContent = stemNames.length;
+  const fcStemCount = document.getElementById('fcStemCount');
+  if (fcStemCount) { fcStemCount.style.display = 'inline'; fcStemCount.textContent = stemNames.length + ' STEMS'; }
+
+  // ── Sidebar summary ──
+  const sbSummary = document.getElementById('sbSummary');
+  if (sbSummary) sbSummary.style.display = 'block';
+  const srPipeline = document.getElementById('srPipeline');
+  if (srPipeline) srPipeline.textContent = isPiano ? 'Piano' : 'Multi-instr';
+  const srStems = document.getElementById('srStems');
+  if (srStems) srStems.textContent = stemNames.length + ' stems';
+  const srInstrs = document.getElementById('srInstrs');
+  if (srInstrs) srInstrs.textContent = uniqueInstrs.slice(0,3).join(', ') || '—';
+  const srNotation = document.getElementById('srNotation');
+  if (srNotation) srNotation.textContent = result.musicxml_file ? '✓ Ready' : '—';
+
+  // ── Menu bar export ──
+  if (result.musicxml_file) {
+    const menuXML = document.getElementById('menuExportXML');
+    if (menuXML) { menuXML.style.display = 'inline'; menuXML.onclick = () => window.open(BASE_URL + result.musicxml_file, '_blank'); }
+  }
+
+  // ── Pipeline banner ──
+  const banner = document.createElement('div');
+  banner.className = 'pipeline-banner';
+  banner.innerHTML = `
+    <div class="pb-icon">${isPiano ? '' : ''}</div>
+    <div class="pb-body">
+      <div class="pb-title">${isPiano ? 'Piano-Only Pipeline' : 'Multi-Instrument Pipeline'}</div>
+      <div class="pb-sub">${isPiano
+        ? 'Piano detected as primary source. Single-instrument optimized transcription with left/right hand separation.'
+        : 'Multiple instruments detected across stems. Per-stem transcription and ensemble score generation.'
+      }</div>
+    </div>
+    <div class="pb-badge ${isPiano ? 'piano' : 'multi'}">${isPiano ? 'PIANO' : 'ENSEMBLE'}</div>`;
+  ss.appendChild(banner);
+
+  // ── Stat strip ──
+  const strip = document.createElement('div');
+  strip.className = 'stat-strip';
+  strip.innerHTML = `
+    <div class="stat-box"><div class="stat-val">${stemNames.length}</div><div class="stat-lbl">Stems</div></div>
+    <div class="stat-box"><div class="stat-val g">${uniqueInstrs.length}</div><div class="stat-lbl">Instruments</div></div>
+    <div class="stat-box"><div class="stat-val a">${isPiano ? 'Piano' : 'Multi'}</div><div class="stat-lbl">Pipeline</div></div>
+    <div class="stat-box"><div class="stat-val p">${result.musicxml_file ? 'Yes' : 'No'}</div><div class="stat-lbl">Notation</div></div>`;
+  ss.appendChild(strip);
+
+  // ── Stem cards ──
+  const sbNav = document.getElementById('sbStemsNav');
+  sbNav.innerHTML = '';
+
+  stemNames.forEach((stemName, idx) => {
+    const audioUrl    = `${BASE_URL}${result.stems[stemName]}`;
+    const instruments = result.instruments?.[stemName] || [];
+    const icon        = STEM_ICONS[stemName]  || '🎵';
+    const theme       = STEM_COLORS[stemName] || DEFAULT_THEME;
+
+    const card = buildStemCard(stemName, audioUrl, instruments, icon, theme, idx);
+    ss.appendChild(card);
+
+    // Sidebar quick-play nav
+    const navBtn = document.createElement('div');
+    navBtn.className = 'sb-stem-btn';
+    navBtn.id = 'sbNav_' + stemName;
+    navBtn.innerHTML = `
+      <span class="sbs-icon">${icon}</span>
+      <span class="sbs-name" style="color:${theme.col}">${stemName}</span>
+      <div class="sbs-led"></div>`;
+    navBtn.onclick = () => {
+      switchInnerTab('stems');
+      setTimeout(() => { const p = audioPlayers[stemName]; if (p) p.toggle(); }, 50);
+    };
+    sbNav.appendChild(navBtn);
+  });
+
+  // ── Notation tab ──
+  if (result.musicxml_file) {
+    const xmlUrl = `${BASE_URL}${result.musicxml_file}`;
+    document.getElementById('ntTitle').textContent = isPiano ? ' Piano Sheet Music' : ' Multi-Instrument Score';
+    document.getElementById('ntSub').textContent   = 'MusicXML rendered via OpenSheetMusicDisplay';
+
+    const dlV = document.getElementById('dlXmlView');
+    const dlD = document.getElementById('dlXmlDown');
+    dlV.href = xmlUrl; dlV.style.display = 'inline-flex';
+    dlD.style.display = 'inline-flex';
+    dlD.onclick = downloadSheetAsPDF;
+    // Hide idle, show container
+    document.getElementById('notationIdle').style.display   = 'none';
+    const sc = document.getElementById('sheetContainer');
+    sc.style.display = 'flex';
+    sc.style.flexDirection = 'column';
+
+    // Store URL for lazy rendering
+    // Store URL for lazy rendering
+    notationXMLUrl = xmlUrl;
+
+    // ✅ If notation tab is already active, render immediately
+    if (document.getElementById('tab-notation').classList.contains('active')) {
+      setTimeout(() => renderMusicXML(notationXMLUrl), 200);
+    }
+
+    // ✅ Setup MIDI player if MIDI file exists
+    if (result.midi_file) {
+      midiUrl = `${BASE_URL}${result.midi_file}`;
+      document.getElementById('playMidiBtn').style.display = 'inline-flex';
+      console.log('MIDI URL set:', midiUrl);
+    }
+  }
+
+  // ── Sargam tab ──
+  if (result.sargam_notation) {
+    renderSargam(result.sargam_notation);
+  }
+} // ✅ CLOSE renderResults() function properly
+
+
+
+
+// ── BUILD STEM CARD ──
+function buildStemCard(stemName, audioUrl, instruments, icon, theme, idx) {
+  const card = document.createElement('div');
+  card.className = 'stem-card';
+  card.id = 'card_' + stemName;
+  card.style.animationDelay = (idx * 90) + 'ms';
+
+  const badgeHtml = instruments.length
+    ? instruments.map(i => {
+        const name = i.instrument || i.instrument_name || '—';
+        const conf = ((i.confidence || 0) * 100).toFixed(0);
+        return `<span class="sc-instr">${name} ${conf}%</span>`;
+      }).join('')
+    : '<span style="font-size:10px;color:var(--muted)">No instrument detected</span>';
+
+  const confHtml = instruments.map(i => {
+    const name = i.instrument || i.instrument_name || '—';
+    const conf = Math.min(100, ((i.confidence || 0) * 100));
+    return `
+      <div class="sc-conf-row">
+        <span class="scr-name">${name}</span>
+        <div class="scr-track"><div class="scr-fill" style="width:${conf.toFixed(0)}%;background:${theme.col}"></div></div>
+        <span class="scr-pct">${conf.toFixed(0)}%</span>
+      </div>`;
+  }).join('');
+
+  card.innerHTML = `
+    <div class="sc-head">
+      <div class="sc-icon" style="background:${theme.bg};border-color:${theme.border}">${icon}</div>
+      <div class="sc-info">
+        <div class="sc-name" style="color:${theme.col}">${stemName}</div>
+        <div class="sc-badges">${badgeHtml}</div>
+      </div>
+      <div class="sc-status" id="status_${stemName}">Stopped</div>
+    </div>
+    ${confHtml ? `<div>${confHtml}</div>` : ''}
+    <div class="sc-player">
+      <button class="play-btn" id="playBtn_${stemName}" style="background:${theme.col}">▶</button>
+      <div class="player-mid">
+        <div class="prog-track" id="ptrack_${stemName}">
+          <div class="prog-fill" id="pfill_${stemName}" style="background:linear-gradient(90deg,${theme.col},${theme.col}88)"></div>
+        </div>
+        <div class="time-row">
+          <span id="tcur_${stemName}">0:00</span>
+          <span id="tdur_${stemName}">—</span>
+        </div>
+      </div>
+      <div class="vol-row">
+        <span class="vol-icon">🔊</span>
+        <input type="range" class="vol-slider" min="0" max="1" step="0.05" value="1" id="vol_${stemName}">
+      </div>
+    </div>
+    <audio id="audio_${stemName}" src="${audioUrl}" preload="metadata" crossorigin="anonymous"></audio>`;
+
+  setTimeout(() => wirePlayer(stemName, theme.col), 0);
+  return card;
+}
+
+// ── WIRE AUDIO PLAYER ──
+function wirePlayer(stemName) {
+  const audio    = document.getElementById('audio_' + stemName);
+  const playBtn  = document.getElementById('playBtn_' + stemName);
+  const pfill    = document.getElementById('pfill_' + stemName);
+  const ptrack   = document.getElementById('ptrack_' + stemName);
+  const tcur     = document.getElementById('tcur_' + stemName);
+  const tdur     = document.getElementById('tdur_' + stemName);
+  const vol      = document.getElementById('vol_' + stemName);
+  const card     = document.getElementById('card_' + stemName);
+  const statusEl = document.getElementById('status_' + stemName);
+  const navBtn   = document.getElementById('sbNav_' + stemName);
+  if (!audio) return;
+
+  function fmt(s) {
+    if (!isFinite(s)) return '0:00';
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  }
+
+  function pauseAllOthers() {
+    Object.entries(audioPlayers).forEach(([k, p]) => {
+      if (k !== stemName && !p.audio.paused) p.pause();
+    });
+  }
+
+  const play   = () => { pauseAllOthers(); audio.play().catch(e => console.warn('Play failed:', e)); };
+  const pause  = () => audio.pause();
+  const toggle = () => (audio.paused ? play() : pause());
+
+  audioPlayers[stemName] = { audio, play, pause, toggle };
+
+  playBtn.onclick = toggle;
+
+  audio.addEventListener('play', () => {
+    playBtn.textContent = '⏸';
+    card.classList.add('active');
+    statusEl.textContent = 'Playing';
+    if (navBtn) navBtn.classList.add('playing');
+    currentPlaying = stemName;
+  });
+
+  audio.addEventListener('pause', () => {
+    playBtn.textContent = '▶';
+    card.classList.remove('active');
+    statusEl.textContent = audio.ended ? 'Stopped' : 'Paused';
+    if (navBtn) navBtn.classList.remove('playing');
+    if (currentPlaying === stemName) currentPlaying = null;
+  });
+
+  audio.addEventListener('ended', () => {
+    playBtn.textContent = '▶';
+    card.classList.remove('active');
+    statusEl.textContent = 'Stopped';
+    pfill.style.width = '0%';
+    tcur.textContent = '0:00';
+    if (navBtn) navBtn.classList.remove('playing');
+  });
+
+  audio.addEventListener('timeupdate', () => {
+    if (!audio.duration) return;
+    pfill.style.width = ((audio.currentTime / audio.duration) * 100) + '%';
+    tcur.textContent  = fmt(audio.currentTime);
+  });
+
+  audio.addEventListener('loadedmetadata', () => {
+    tdur.textContent = fmt(audio.duration);
+  });
+
+  audio.addEventListener('error', (e) => {
+    statusEl.textContent = 'Error';
+    console.error(`[Audio error] ${stemName}:`, e);
+  });
+
+  ptrack.addEventListener('click', e => {
+    if (!audio.duration) return;
+    const r = ptrack.getBoundingClientRect();
+    audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
+  });
+
+  vol.addEventListener('input', () => {
+    audio.volume = parseFloat(vol.value);
+  });
+}
+
+// ── MUSICXML RENDER ──
+async function renderMusicXML(url) {
+  const container = document.getElementById('sheetContainer');
+  container.innerHTML = "Rendering notation...";
+
+  try {
+    osmdInstance = new opensheetmusicdisplay.OpenSheetMusicDisplay(container, {
+      backend: "svg",
+      drawingParameters: "compact",
+      autoResize: true,
+      followCursor: true,          // auto-scroll to keep cursor visible
     });
 
-    const params = new URLSearchParams(window.location.search);
-    const filename = params.get("file");
+    await osmdInstance.load(url);
+    await osmdInstance.render();
 
-    const stemIcons = {
-        "drums": "🥁",
-        "bass": "🎸",
-        "other": "🎹",
-        "vocals": "🎤"
-    };
+    // ── Initialize cursor ──
+    osmdInstance.cursor.show();
+    osmdInstance.cursor.reset();
 
-    let audioPlayers = {};
-    let currentPlayingStem = null;
+    console.log("OSMD render success");
+  } catch (err) {
+    console.error("OSMD render error:", err);
+    container.innerHTML = "<div style='padding:16px;color:red'>Failed to render notation</div>";
+  }
+}
 
-    function formatTime(seconds) {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
+// ── SARGAM RENDER ──
+const SARGAM_COLORS = {
+  'Sa':   '#0096FF',
+  'Re♭':  '#2dd4bf', 'Re':  '#2dd4bf',
+  'Ga♭':  '#818cf8', 'Ga':  '#818cf8',
+  'Ma♯':  '#f59e0b', 'Ma':  '#f59e0b',
+  'Pa':   '#22c55e',
+  'Dha♭': '#ef4444', 'Dha': '#ef4444',
+  'Ni♭':  '#ec4899', 'Ni':  '#ec4899',
+};
+
+// Tokenize one line into [{ type:'note'|'bar'|'rest', value, octave }]
+function tokenizeSargamLine(line) {
+  const tokens = [];
+  const parts  = line.trim().split(/\s+/);
+
+  for (const part of parts) {
+    if (!part) continue;
+
+    if (part === '|') {
+      tokens.push({ type: 'bar' });
+      continue;
     }
 
-    function createCustomPlayer(stemName, audioUrl, instruments) {
-        const icon = stemIcons[stemName.toLowerCase()] || "🎵";
-        
-        const playerDiv = document.createElement("div");
-        playerDiv.className = "stem-player rounded-2xl p-6";
-        playerDiv.dataset.stem = stemName.toLowerCase();
-
-        let instBadges = "";
-        if (instruments && instruments.length) {
-            instruments.forEach(i => {
-                const confidence = (i.confidence * 100).toFixed(0);
-                instBadges += `
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium badge mr-2 mb-2" style="color: white;">
-                        ${i.instrument} <span class="ml-1.5" style="color: #00FF00;">${confidence}%</span>
-                    </span>
-                `;
-            });
-        }
-
-        playerDiv.innerHTML = `
-            <div class="flex items-center space-x-4 mb-6">
-                <div class="text-6xl">${icon}</div>
-                <div class="flex-1">
-                    <h3 class="text-2xl font-bold mb-1" style="color: white;">${stemName.toUpperCase()}</h3>
-                    <p class="text-sm" style="color: white; opacity: 0.7;">${instruments?.length || 0} instrument${instruments?.length !== 1 ? 's' : ''} detected</p>
-                </div>
-            </div>
-            
-            ${instBadges ? `<div class="mb-6 flex flex-wrap">${instBadges}</div>` : ''}
-
-            <div class="custom-audio-controls">
-                <button class="play-button">▶</button>
-                
-                <div class="progress-container">
-                    <div class="progress-bar" style="width: 0%"></div>
-                </div>
-                
-                <div class="time-display">0:00 / 0:00</div>
-                
-                <div class="volume-control">
-                    <span style="font-size: 18px;">🔊</span>
-                    <div class="volume-slider">
-                        <div class="volume-level" style="width: 100%"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <audio src="${audioUrl}" preload="metadata"></audio>
-        `;
-
-        const audio = playerDiv.querySelector("audio");
-        const playBtn = playerDiv.querySelector(".play-button");
-        const progressBar = playerDiv.querySelector(".progress-bar");
-        const progressContainer = playerDiv.querySelector(".progress-container");
-        const timeDisplay = playerDiv.querySelector(".time-display");
-        const volumeSlider = playerDiv.querySelector(".volume-slider");
-        const volumeLevel = playerDiv.querySelector(".volume-level");
-
-        audioPlayers[stemName] = { audio, element: playerDiv, icon, instruments };
-
-        // Play/Pause
-        playBtn.addEventListener("click", () => {
-            if (audio.paused) {
-                Object.values(audioPlayers).forEach(p => {
-                    if (p.audio !== audio) {
-                        p.audio.pause();
-                        p.element.classList.remove("playing");
-                        p.element.querySelector(".play-button").textContent = "▶";
-                    }
-                });
-                audio.play();
-            } else {
-                audio.pause();
-            }
-        });
-
-        audio.addEventListener("play", () => {
-            playBtn.textContent = "⏸";
-            playerDiv.classList.add("playing");
-            currentPlayingStem = stemName;
-            updateVisualization(stemName, icon, instruments);
-        });
-
-        audio.addEventListener("pause", () => {
-            playBtn.textContent = "▶";
-            playerDiv.classList.remove("playing");
-            if (currentPlayingStem === stemName) {
-                resetVisualization();
-            }
-        });
-
-        audio.addEventListener("ended", () => {
-            playBtn.textContent = "▶";
-            playerDiv.classList.remove("playing");
-            progressBar.style.width = "0%";
-            if (currentPlayingStem === stemName) {
-                resetVisualization();
-            }
-        });
-
-        // Progress
-        audio.addEventListener("timeupdate", () => {
-            const percent = (audio.currentTime / audio.duration) * 100;
-            progressBar.style.width = percent + "%";
-            timeDisplay.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
-        });
-
-        audio.addEventListener("loadedmetadata", () => {
-            timeDisplay.textContent = `0:00 / ${formatTime(audio.duration)}`;
-        });
-
-        progressContainer.addEventListener("click", (e) => {
-            const rect = progressContainer.getBoundingClientRect();
-            const percent = (e.clientX - rect.left) / rect.width;
-            audio.currentTime = percent * audio.duration;
-        });
-
-        // Volume
-        volumeSlider.addEventListener("click", (e) => {
-            const rect = volumeSlider.getBoundingClientRect();
-            const percent = (e.clientX - rect.left) / rect.width;
-            audio.volume = Math.max(0, Math.min(1, percent));
-            volumeLevel.style.width = (percent * 100) + "%";
-        });
-
-        return playerDiv;
+    // Detect trailing octave markers  '  or  ,  (may be repeated)
+    const octaveMatch = part.match(/^(.*?)('+|,+)$/);
+    let base   = part;
+    let octave = '';
+    if (octaveMatch) {
+      base   = octaveMatch[1];
+      octave = octaveMatch[2];
     }
 
-    function updateVisualization(stemName, icon, instruments) {
-        const iconDisplay = document.getElementById("iconDisplay");
-        const visualizerIcon = document.getElementById("visualizerIcon");
-        const stemTitle = document.getElementById("stemTitle");
-        const stemSubtitle = document.getElementById("stemSubtitle");
-        const waveformContainer = document.getElementById("waveformContainer");
-        const currentStemBadge = document.getElementById("currentStemBadge");
-        const instrumentsList = document.getElementById("instrumentsList");
+    // Match against known syllables (longest first)
+    const keys = Object.keys(SARGAM_COLORS).sort((a, b) => b.length - a.length);
+    const matched = keys.find(k => base === k || base.startsWith(k));
 
-        iconDisplay.textContent = icon;
-        visualizerIcon.classList.add("playing");
-        stemTitle.textContent = stemName.toUpperCase() + " STEM";
-        stemSubtitle.textContent = instruments?.length ? `${instruments.length} Instrument${instruments.length !== 1 ? 's' : ''} Active` : "Playing";
-        
-        waveformContainer.classList.remove("hidden");
-        const waveBars = waveformContainer.querySelectorAll(".wave-bar");
-        waveBars.forEach(bar => bar.classList.add("active"));
-        
-        currentStemBadge.classList.remove("hidden");
-        currentStemBadge.querySelector("span").textContent = `● ${stemName.toUpperCase()} PLAYING`;
-        currentStemBadge.querySelector("span").style.color = "#00FF00";
+    tokens.push({
+      type:   'note',
+      value:  base,
+      key:    matched || null,
+      octave: octave,
+    });
+  }
 
-        if (instruments && instruments.length) {
-            instrumentsList.innerHTML = "";
-            instruments.forEach(i => {
-                const badge = document.createElement("span");
-                badge.className = "inline-flex items-center px-4 py-2 rounded-full text-sm font-medium badge";
-                badge.style.color = "white";
-                badge.innerHTML = `${i.instrument} <span class="ml-2" style="color: #00FF00;">${(i.confidence * 100).toFixed(0)}%</span>`;
-                instrumentsList.appendChild(badge);
-            });
-            instrumentsList.classList.remove("hidden");
-        } else {
-            instrumentsList.classList.add("hidden");
-        }
+  return tokens;
+}
+
+function renderSargam(raw) {
+  if (!raw || !raw.trim()) return;
+
+  document.getElementById('sargamIdle').style.display    = 'none';
+  document.getElementById('sargamContent').style.display = 'block';
+
+  const lines    = raw.split('\n').filter(l => l.trim());
+  const measures = (raw.match(/\|/g) || []).length;
+  const allTokens = raw.split(/\s+/).filter(w => w && w !== '|');
+
+  // ── Stats ──
+  document.getElementById('sargamStats').innerHTML = `
+    <div class="stat-box"><div class="stat-val">${allTokens.length}</div><div class="stat-lbl">Syllables</div></div>
+    <div class="stat-box"><div class="stat-val g">${measures}</div><div class="stat-lbl">Measures</div></div>
+    <div class="stat-box"><div class="stat-val a">${lines.length}</div><div class="stat-lbl">Lines</div></div>
+    <div class="stat-box"><div class="stat-val p">Indian</div><div class="stat-lbl">System</div></div>`;
+
+  // ── Render lines ──
+  let html = '';
+  let lineNum = 1;
+
+  for (const line of lines) {
+    if (!line.trim()) continue;
+
+    html += `<div class="sg-line">
+      <span class="sg-line-num">${lineNum++}</span>`;
+
+    const tokens = tokenizeSargamLine(line);
+
+    for (const tok of tokens) {
+      if (tok.type === 'bar') {
+        html += '<span class="sg-bar">│</span>';
+        continue;
+      }
+
+      const col = tok.key ? SARGAM_COLORS[tok.key] : 'rgba(255,255,255,0.35)';
+
+      // Octave superscript
+      const octHtml = tok.octave
+        ? `<span class="sg-oct" style="color:${col}">${tok.octave}</span>`
+        : '';
+
+      html += `<span class="sg-syllable" style="color:${col};border-bottom-color:${col}40">${tok.value}${octHtml}</span>`;
     }
 
-    function resetVisualization() {
-        const iconDisplay = document.getElementById("iconDisplay");
-        const visualizerIcon = document.getElementById("visualizerIcon");
-        const stemTitle = document.getElementById("stemTitle");
-        const stemSubtitle = document.getElementById("stemSubtitle");
-        const waveformContainer = document.getElementById("waveformContainer");
-        const currentStemBadge = document.getElementById("currentStemBadge");
-        const instrumentsList = document.getElementById("instrumentsList");
+    html += '</div>';
+  }
 
-        iconDisplay.textContent = "🎼";
-        visualizerIcon.classList.remove("playing");
-        stemTitle.textContent = "Ready to Play";
-        stemSubtitle.textContent = "Select a stem to visualize";
-        
-        waveformContainer.classList.add("hidden");
-        const waveBars = waveformContainer.querySelectorAll(".wave-bar");
-        waveBars.forEach(bar => bar.classList.remove("active"));
-        
-        currentStemBadge.classList.add("hidden");
-        instrumentsList.classList.add("hidden");
+  document.getElementById('sargamText').innerHTML = html;
+}
+
+// ── RESTORE FROM CACHE ──
+// ── RESTORE FROM CACHE ──
+(function tryRestore() {
+  try {
+    // DEV: always clear cache so fresh HTML changes take effect
+    localStorage.removeItem('polyphonicAnalysis');
+    localStorage.removeItem('polyphonicFile');
+
+    const cachedFile = localStorage.getItem('polyphonicFile');
+    if (urlFile && cachedFile && cachedFile !== urlFile) {
+      localStorage.removeItem('polyphonicAnalysis');
+      localStorage.removeItem('polyphonicFile');
+      return;
+    }
+    const raw = localStorage.getItem('polyphonicAnalysis');
+    if (!raw) return;
+    const cached = JSON.parse(raw);
+    if (!cached || !cached.stems) return;
+
+    analysisResult = cached;
+    allStepsDone();
+    document.getElementById('idleState').style.display = 'none';
+    renderResults(cached);
+  } catch(e) {
+    console.warn('[Cache restore skipped]', e.message);
+  }
+})();
+
+// ── MIDI PLAYBACK ──
+// ── CURSOR SYNC STATE ──
+let cursorAnimFrame   = null;
+let cursorNoteTimings = []; // [{timeSeconds, iterator}] built at load time
+let midiStartTime     = null;
+
+function buildCursorTimings(midi) {
+  // Build a flat list of { time } from all MIDI notes, deduplicated and sorted
+  const times = new Set();
+  midi.tracks.forEach(track => {
+    track.notes.forEach(note => {
+      times.add(parseFloat(note.time.toFixed(3)));
+    });
+  });
+  return [...times].sort((a, b) => a - b);
+}
+
+function stopCursorSync() {
+  if (cursorAnimFrame) {
+    cancelAnimationFrame(cursorAnimFrame);
+    cursorAnimFrame = null;
+  }
+}
+
+function resetCursor() {
+  if (osmdInstance && osmdInstance.cursor) {
+    osmdInstance.cursor.reset();
+    osmdInstance.cursor.show();
+  }
+}
+
+function hideCursor() {
+  if (osmdInstance && osmdInstance.cursor) {
+    osmdInstance.cursor.hide();
+  }
+}
+
+// Highlight the cursor element with a glow effect
+function styleCursor() {
+  // OSMD renders cursor as an SVG rect — find and style it
+  const container = document.getElementById('sheetContainer');
+  const cursors = container.querySelectorAll('.osmd-cursor, [class*="cursor"]');
+  cursors.forEach(el => {
+    el.style.opacity = '0.75';
+    el.style.fill = '#0096FF';
+    el.style.filter = 'drop-shadow(0 0 6px #0096FF)';
+  });
+  // Also try SVG rect approach
+  const rects = container.querySelectorAll('svg rect[fill]');
+  rects.forEach(r => {
+    const fill = r.getAttribute('fill');
+    if (fill && (fill.includes('blue') || fill.includes('#'))) {
+      r.setAttribute('fill', '#0096FF');
+      r.style.filter = 'drop-shadow(0 0 8px rgba(0,150,255,0.8))';
+      r.style.opacity = '0.6';
+    }
+  });
+}
+
+document.getElementById("playMidiBtn").onclick = async () => {
+  if (!midiUrl) {
+    alert('MIDI file not available');
+    return;
+  }
+
+  const btn = document.getElementById("playMidiBtn");
+
+  // ── STOP if already playing ──
+  if (midiPlayer && Tone.Transport.state === 'started') {
+    Tone.Transport.stop();
+    Tone.Transport.cancel();
+    stopCursorSync();
+    resetCursor();
+    btn.textContent = '▶ Play Score';
+    midiPlayer = null;
+    return;
+  }
+
+  try {
+    btn.textContent = 'Loading...';
+    btn.disabled = true;
+
+    // ── Ensure notation tab is visible and OSMD is rendered ──
+    if (!osmdInstance && notationXMLUrl) {
+      switchInnerTab('notation');
+      await new Promise(r => setTimeout(r, 1800));
+    }
+    // Switch to notation tab so cursor is visible
+    switchInnerTab('notation');
+
+    const response = await fetch(midiUrl);
+    if (!response.ok) throw new Error(`Failed to load MIDI: ${response.status}`);
+
+    const arrayBuffer = await response.arrayBuffer();
+    const midi = new Midi(arrayBuffer);
+
+    await Tone.start();
+    Tone.Transport.cancel();
+
+    // ── Build note timings for cursor sync ──
+    const noteTimings = buildCursorTimings(midi);
+
+    // ── Reset cursor to start ──
+    if (osmdInstance && osmdInstance.cursor) {
+      osmdInstance.cursor.reset();
+      osmdInstance.cursor.show();
+      styleCursor();
     }
 
-    document.getElementById("analyzeBtn").onclick = async () => {
-        if (!filename) {
-            alert("No file provided");
-            return;
+    // ── Schedule all synth notes ──
+    midiPlayer = [];
+    midi.tracks.forEach(track => {
+      if (!track.notes.length) return;
+      const synth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 0.02, decay: 0.1, sustain: 0.5, release: 0.8 }
+      }).toDestination();
+      synth.volume.value = -6;
+
+      track.notes.forEach(note => {
+        Tone.Transport.schedule(time => {
+          synth.triggerAttackRelease(note.name, note.duration, time, note.velocity);
+        }, note.time);
+      });
+      midiPlayer.push(synth);
+    });
+
+    // ── Schedule cursor advances at each unique note onset ──
+    if (osmdInstance && osmdInstance.cursor) {
+      noteTimings.forEach((t, idx) => {
+        Tone.Transport.schedule(() => {
+          // Must run on next animation frame to safely touch DOM
+          requestAnimationFrame(() => {
+            if (!osmdInstance || !osmdInstance.cursor) return;
+            try {
+              if (idx === 0) {
+                osmdInstance.cursor.reset();
+              } else {
+                osmdInstance.cursor.next();
+              }
+              styleCursor();
+
+              // Auto-scroll sheetContainer to keep cursor in view
+              const container = document.getElementById('sheetContainer');
+              const cursorEl  = container.querySelector('.osmd-cursor-img, [class*="cursor"] image, svg image');
+              if (cursorEl) {
+                const rect = cursorEl.getBoundingClientRect();
+                const cRect = container.getBoundingClientRect();
+                if (rect.bottom > cRect.bottom - 40 || rect.top < cRect.top + 40) {
+                  container.scrollBy({ top: rect.height * 2, behavior: 'smooth' });
+                }
+              }
+            } catch(e) { /* cursor may be at end */ }
+          });
+        }, t);
+      });
+    }
+
+    // ── Get total duration ──
+    const duration = Math.max(...midi.tracks.map(t =>
+      t.notes.length ? Math.max(...t.notes.map(n => n.time + n.duration)) : 0
+    ));
+
+    Tone.Transport.start();
+    btn.textContent = '⏸ Stop';
+    btn.disabled = false;
+
+    // ── Auto-stop when done ──
+    setTimeout(() => {
+      if (Tone.Transport.state === 'started') {
+        Tone.Transport.stop();
+        Tone.Transport.cancel();
+        stopCursorSync();
+        btn.textContent = '▶ Play Score';
+        midiPlayer = null;
+        // Leave cursor at last position — reset on next play
+      }
+    }, duration * 1000 + 800);
+
+  } catch (error) {
+    console.error('MIDI playback error:', error);
+    alert('Error playing MIDI: ' + error.message);
+    btn.textContent = '▶ Play Score';
+    btn.disabled = false;
+  }
+};
+
+async function downloadSheetAsPDF() {
+  // Auto-render sheet if not yet visited
+  if (!osmdInstance && notationXMLUrl) {
+    switchInnerTab('notation');
+    await new Promise(r => setTimeout(r, 1800));
+  }
+
+  const container = document.getElementById('sheetContainer');
+  const svgs = container.querySelectorAll('svg');
+
+  if (!svgs.length) {
+    alert('Please open the Sheet Music Notation tab first so it renders, then download.');
+    return;
+  }
+
+  const btn = document.getElementById('dlXmlDown');
+  btn.textContent = '⏳ Generating…';
+  btn.disabled = true;
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const pageW    = 210;
+    const pageH    = 297;
+    const margin   = 12;
+    const usableW  = pageW - margin * 2;
+    const usableH  = pageH - margin * 2;
+
+    let yOffset  = margin;
+    let firstPage = true;
+
+    for (let i = 0; i < svgs.length; i++) {
+      const svg = svgs[i];
+
+      // ── Get real SVG dimensions ──
+      let svgW, svgH;
+      const vb = svg.getAttribute('viewBox');
+      if (vb) {
+        const parts = vb.split(/[\s,]+/);
+        svgW = parseFloat(parts[2]);
+        svgH = parseFloat(parts[3]);
+      } else {
+        const bb = svg.getBoundingClientRect();
+        svgW = bb.width  || svg.width?.baseVal?.value  || 800;
+        svgH = bb.height || svg.height?.baseVal?.value || 400;
+      }
+      if (!svgW || !svgH) continue;
+
+      // ── Render SVG to a high-DPI canvas ──
+      const cloned = svg.cloneNode(true);
+      cloned.setAttribute('width',  svgW);
+      cloned.setAttribute('height', svgH);
+      cloned.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+      const svgData = new XMLSerializer().serializeToString(cloned);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl  = URL.createObjectURL(svgBlob);
+
+      // Draw full SVG onto one big canvas
+      const canvas = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const scale = 3;
+          const c = document.createElement('canvas');
+          c.width  = svgW * scale;
+          c.height = svgH * scale;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, c.width, c.height);
+          ctx.scale(scale, scale);
+          ctx.drawImage(img, 0, 0, svgW, svgH);
+          URL.revokeObjectURL(svgUrl);
+          resolve(c);
+        };
+        img.onerror = (e) => { URL.revokeObjectURL(svgUrl); reject(e); };
+        img.src = svgUrl;
+      });
+
+      // ── Total rendered height in mm ──
+      const aspectRatio  = svgH / svgW;
+      const totalImgH_mm = usableW * aspectRatio;
+
+      // ── How many px in the canvas = 1 mm of PDF ──
+      const pxPerMm = canvas.height / totalImgH_mm;
+
+      // ── Slice the canvas into page-height strips ──
+      let srcYpx = 0; // current read position in canvas pixels
+
+      while (srcYpx < canvas.height) {
+
+        // How much vertical space is left on the current page (mm)?
+        const spaceLeft_mm = pageH - yOffset - margin;
+
+        // How tall a strip can we fit? (mm → px)
+        const stripH_mm  = Math.min(spaceLeft_mm, usableH);
+        const stripH_px  = Math.round(stripH_mm * pxPerMm);
+
+        if (stripH_px <= 0) {
+          // No space at all — force new page
+          pdf.addPage();
+          yOffset = margin;
+          continue;
         }
 
-        const analyzeBtn = document.getElementById("analyzeBtn");
-        const status = document.getElementById("status");
-        const statusText = document.getElementById("statusText");
-        const stemsContainer = document.getElementById("stemsContainer");
+        // Clamp to remaining canvas height
+        const actualStripH_px = Math.min(stripH_px, canvas.height - srcYpx);
+        const actualStripH_mm = actualStripH_px / pxPerMm;
 
-        analyzeBtn.disabled = true;
-        status.classList.remove("hidden");
-        statusText.textContent = "Separating stems...";
-        stemsContainer.innerHTML = "";
+        // Cut the strip out of the canvas
+        const strip = document.createElement('canvas');
+        strip.width  = canvas.width;
+        strip.height = actualStripH_px;
+        const sctx = strip.getContext('2d');
+        sctx.fillStyle = '#ffffff';
+        sctx.fillRect(0, 0, strip.width, strip.height);
+        sctx.drawImage(canvas,
+          0, srcYpx,                    // source x, y
+          canvas.width, actualStripH_px, // source w, h
+          0, 0,                          // dest x, y
+          strip.width, actualStripH_px   // dest w, h
+        );
 
-        try {
-            const res = await fetch(
-                `http://127.0.0.1:8000/analyze/polyphonic/?filename=${filename}`,
-                { method: "POST" }
-            );
-
-            if (!res.ok) throw new Error(await res.text());
-            const result = await res.json();
-
-            statusText.textContent = "Separation complete!";
-            setTimeout(() => status.classList.add("hidden"), 3000);
-
-            Object.entries(result.stems).forEach(([name, url]) => {
-                const instruments = result.instruments[name] || [];
-                const player = createCustomPlayer(name, `http://127.0.0.1:8000${url}`, instruments);
-                stemsContainer.appendChild(player);
-            });
-
-            analyzeBtn.disabled = false;
-
-        } catch (err) {
-            console.error(err);
-            statusText.textContent = `Error: ${err.message}`;
-            analyzeBtn.disabled = false;
+        // Add new page if not the very first placement
+        if (!firstPage && spaceLeft_mm < 10) {
+          pdf.addPage();
+          yOffset = margin;
         }
-    };
+
+        pdf.addImage(
+          strip.toDataURL('image/png'),
+          'PNG',
+          margin, yOffset,
+          usableW, actualStripH_mm
+        );
+
+        yOffset   += actualStripH_mm + 2;
+        srcYpx    += actualStripH_px;
+        firstPage  = false;
+
+        // If we still have more canvas to render, add a new page
+        if (srcYpx < canvas.height) {
+          pdf.addPage();
+          yOffset = margin;
+        }
+      }
+    }
+
+    const filename = (document.getElementById('sideFileName').textContent || 'score')
+      .replace(/\.[^.]+$/, '');
+    pdf.save(`${filename}_sheet_music.pdf`);
+
+  } catch (err) {
+    console.error('PDF generation error:', err);
+    alert('PDF generation failed: ' + err.message);
+  } finally {
+    btn.textContent = '⬇ Download PDF';
+    btn.disabled = false;
+  }
+}
+
+async function downloadSargamAsPDF() {
+  const btn = document.getElementById('dlSargamPdf');
+  btn.textContent = '⏳ Generating…';
+  btn.disabled = true;
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const pageW   = 210;
+    const pageH   = 297;
+    const margin  = 12;
+    const usableW = pageW - margin * 2;
+    const usableH = pageH - margin * 2;
+
+    // ── Capture the full sargam card as a canvas ──
+    const target = document.getElementById('sargamContent');
+
+    const canvas = await html2canvas(target, {
+      backgroundColor: '#0a0a2e',   // match your sargam-card bg
+      scale: 2,                      // 2x for crisp text
+      useCORS: true,
+      logging: false,
+      windowWidth: target.scrollWidth,
+      windowHeight: target.scrollHeight
+    });
+
+    // ── mm per canvas pixel ──
+    const totalH_mm  = usableW * (canvas.height / canvas.width);
+    const pxPerMm    = canvas.height / totalH_mm;
+
+    let yOffset   = margin;
+    let srcYpx    = 0;
+    let firstPage = true;
+
+    // ── Add title header on first page ──
+    const filename = (document.getElementById('sideFileName').textContent || 'score')
+      .replace(/\.[^.]+$/, '');
+
+    pdf.setFontSize(14);
+    pdf.setTextColor(30, 30, 30);
+    pdf.text('Sargam Notation — ' + filename, margin, yOffset);
+    yOffset += 7;
+
+    pdf.setFontSize(9);
+    pdf.setTextColor(120, 120, 120);
+    pdf.text('Sa Re Ga Ma Pa Dha Ni  ·  Indian Classical System', margin, yOffset);
+    yOffset += 8;
+
+    // ── Slice canvas into page-height strips ──
+    while (srcYpx < canvas.height) {
+
+      const spaceLeft_mm = pageH - yOffset - margin;
+      const stripH_mm    = Math.min(spaceLeft_mm, usableH);
+      const stripH_px    = Math.round(stripH_mm * pxPerMm);
+
+      if (stripH_px <= 0) {
+        pdf.addPage();
+        yOffset = margin;
+        continue;
+      }
+
+      const actualStripH_px = Math.min(stripH_px, canvas.height - srcYpx);
+      const actualStripH_mm = actualStripH_px / pxPerMm;
+
+      // Cut strip
+      const strip = document.createElement('canvas');
+      strip.width  = canvas.width;
+      strip.height = actualStripH_px;
+      const sctx = strip.getContext('2d');
+      sctx.fillStyle = '#0a0a2e';
+      sctx.fillRect(0, 0, strip.width, strip.height);
+      sctx.drawImage(canvas,
+        0, srcYpx,
+        canvas.width, actualStripH_px,
+        0, 0,
+        strip.width, actualStripH_px
+      );
+
+      if (!firstPage && spaceLeft_mm < 10) {
+        pdf.addPage();
+        yOffset = margin;
+      }
+
+      pdf.addImage(
+        strip.toDataURL('image/png'),
+        'PNG',
+        margin, yOffset,
+        usableW, actualStripH_mm
+      );
+
+      yOffset   += actualStripH_mm + 2;
+      srcYpx    += actualStripH_px;
+      firstPage  = false;
+
+      if (srcYpx < canvas.height) {
+        pdf.addPage();
+        yOffset = margin;
+      }
+    }
+
+    pdf.save(`${filename}_sargam_notation.pdf`);
+
+  } catch (err) {
+    console.error('Sargam PDF error:', err);
+    alert('PDF generation failed: ' + err.message);
+  } finally {
+    btn.textContent = '⬇ Download PDF';
+    btn.disabled = false;
+  }
+}
+
+// Wire the button once DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('dlSargamPdf');
+  if (btn) btn.onclick = downloadSargamAsPDF;
+});
+
 </script>
-
 </body>
 </html>

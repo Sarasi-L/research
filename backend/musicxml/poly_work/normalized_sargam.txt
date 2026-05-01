@@ -1,0 +1,10 @@
+SARGAM NOTATION
+Source MIDI: D:\My Documents\SLIIT\DS4.1\Research Project\multi_notation_generator_\backend\musicxml/poly_work/normalized.mid
+Total notes: 293
+Mapped: 293 (100.0%)
+
+------------------------------------------------------------
+
+Ni,, Ni, Re' Ga' Ni Ni, Re' Ni Ni,, Re' Ni Ni,,  | Ma♯'' Ni Ni♭,, Ni,, Re' Ni Re' Ma♯' Ni, Dha, Ga' Ma' Ma♯' Dha''  | Re' Ni Re' Re' Ga' Re' Re, Re♭' Ga' Ga♭, Re♭' Ga' Ga Ga, Ni Ga,  | Ni, Ga' Ni, Pa Ni Re' Pa' Ga' Ni Ga' Pa' Dha Dha Re♭'' Dha Ga' Pa' Ga' Ni Ni Pa' Ni Ga' Pa' Pa' Ni Pa' Ga Ni Ga' Re' Ni,, Ni Re' Pa'  |  
+ Ga' Ni Pa' Ga, Re' Ma♯,, Ni Ga' Pa' Pa,, Ni Re' Re' Ni Pa' Ga' Re' Ga' Ni Re' Ma' Pa' Ni' Pa,, Pa Pa Ni Pa' Ni' Re' Ni Pa' Re' Pa Ni Re' Pa' Ni Pa' Re' Pa, Pa,,  | Ni Pa' Re' Ni Pa' Re Re' Re' Ni Re' Ni,, Pa' Sa, Sa' Pa'' Sa Pa Ga' Ma♯'' Sa' Ma♯'' Sa' Pa' Ga'' Ga' Ga' Ga'' Ga Sa'  | Ga Ga' Re'' Sa' Ga'' Ga' Ga'' Sa' Ga' Sa' Ga'' Sa' Ga' Ga'' Ga Ga' Ga'' Sa' Ga' Ga'' Sa' Ga' Sa' Ma♯'' Ga' Sa' Dha Ga' Pa''  | Ga' Ma♯, Dha, Dha'' Dha' Ma♯, Re♭' Dha'' Ma♯' Ga, Ga' Re♭' Ma♯'' Ma♯'' Ga' Ga♭, Re♭' Ma♯' Ma♯' Ma♯'' Ma♯, Dha, Ga' Ma♯' Ma♯'' Dha' Ma♯' Ga, Ga♭, Ma♯'' Re♭' Ga' Pa''  |  
+ Dha Ga'''' Dha' Dha'' Ma♯, Dha, Ga' Re♭' Dha' Pa'' Ga' Ma♯, Re♭' Ma♯'' Ga, Ni♭ Ma♯'' Ma♯, Ni♭ Re♭' Ga' Ni♭' Re♭'''' Ga♭, Re♭' Ga' Ma♯' Ni♭' Re♭''' Ma♯, Dha♭, Re♭'' Re♭' Ga' Ma♯' Ni♭, Ni♭' Ma♯, Ga' Ga, Dha, Ma♯ Re♭' Ga' Ni♭'  | Ga♭, Re♭' Ma♯ Ga' Ma♯' Ni♭' Re♭'' Re♭''' Ni♭, Re''' Ma♯, Ni♭' Re''' Re♭' Ni♭, Ni♭' Re''' Ma♯, Re♭' Ga' Ni♭' Ga, Ma♯' Ni♭''' Re♭' Ni♭' Ni♭'' Re, Re♭'' Ni,, Ga, Re♭' Ga' Re♭'' Ga' Ni♭' Ni,, Ni,  |

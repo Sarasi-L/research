@@ -14,7 +14,7 @@ import tempfile
 from piano_transcription_inference import PianoTranscription, sample_rate
 
 # Import your preprocessing function
-from backend.services.preprocess_stereo_audio import preprocess_audio
+from services.preprocess_stereo_audio import preprocess_audio
 
 
 # ============================================================

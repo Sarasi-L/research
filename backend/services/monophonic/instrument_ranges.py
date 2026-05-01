@@ -1,4 +1,4 @@
-#backend/services/instrument_ranges.py
+#backend/services/monophonic/instrument_ranges.py
 
 INSTRUMENT_FREQ_RANGES = {
     "flute":  (260, 2100),   # C4 – C7

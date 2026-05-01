@@ -30,7 +30,7 @@ from backend.services.polyphonic.note_duration_normalizer import normalize_note_
 # ============================================================
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-INPUT_AUDIO = PROJECT_ROOT / "polysong.mp3"
+INPUT_AUDIO = PROJECT_ROOT / "national-anthem3.mp3"
 
 WORK_DIR = PROJECT_ROOT / "test_output"
 STEMS_DIR = WORK_DIR / "stems"

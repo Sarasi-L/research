@@ -32,12 +32,19 @@ from services.detect_monophonic_instrument import detect_single_instrument
 from services.detect_instruments import detect_all_instruments
 from services.polyphonic.separate_demucs import separate_polyphonic
 
+# Piano detection + pipeline
+from services.polyphonic.detect_piano_from_stems import detect_piano_from_stems
+from services.polyphonic.run_piano_pipeline import run_piano_pipeline
+
+from services.polyphonic.run_polyphonic_pipeline import run_polyphonic_pipeline
+
 
 router = APIRouter()
 
 UPLOAD_DIR = Path("uploads")
 STEMS_DIR = Path("stems")
 MUSICXML_DIR = Path("musicxml")
+MIDI_DIR = Path("musicxml")  # 
 
 UPLOAD_DIR.mkdir(exist_ok=True)
 STEMS_DIR.mkdir(exist_ok=True)
@@ -141,31 +148,132 @@ async def analyze_monophonic(filename: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
 @router.post("/analyze/polyphonic/")
 async def analyze_polyphonic(filename: str):
-    file_path = UPLOAD_DIR / filename
+    try:
+        file_path = UPLOAD_DIR / filename
 
-    stem_paths = separate_polyphonic(str(file_path), output_dir=str(STEMS_DIR))
-    instruments = detect_all_instruments(stem_paths)
-
-    return JSONResponse({
-        "stems": {
-            name: f"/stems/{Path(path).name}"
-            for name, path in stem_paths.items()
-        },
-        "instruments": instruments
-    })
-
-
-
-@router.get("/musicxml/{filename}")
-async def download_musicxml(filename: str):
-    file_path = MUSICXML_DIR / filename
-    if file_path.exists():
-        return FileResponse(
-            file_path,
-            media_type="application/vnd.recordare.musicxml+xml",
-            filename=filename
+        # --------------------------------
+        # STEP 1 — Demucs separation
+        # --------------------------------
+        stem_paths = separate_polyphonic(
+            str(file_path),
+            output_dir=str(STEMS_DIR)
         )
-    raise HTTPException(status_code=404, detail="MusicXML file not found")
+
+        # --------------------------------
+        # STEP 2 — Instrument detection
+        # --------------------------------
+        instruments = detect_all_instruments(stem_paths)
+
+        # --------------------------------
+        # STEP 3 — Detect piano-only
+        # --------------------------------
+        piano_only = detect_piano_from_stems(stem_paths)
+
+        musicxml_file = None
+
+        # --------------------------------
+        # STEP 4 — RUN PIPELINE
+        # --------------------------------
+
+        if piano_only:
+
+            print("\n[PIPELINE] Running PIANO pipeline")
+
+            pipeline_result = run_piano_pipeline(
+                str(file_path),
+                output_dir=str(MUSICXML_DIR)
+            )
+
+        else:
+
+            print("\n[PIPELINE] Running MULTI-INSTRUMENT pipeline")
+
+            pipeline_result = run_polyphonic_pipeline(
+                str(file_path),
+                output_dir=str(MUSICXML_DIR)
+            )
+
+        musicxml_file = f"/musicxml/{Path(pipeline_result['xml']).name}"
+        
+        # ✅ ALWAYS USE normalized.mid from poly_work
+        midi_file = "/midi/normalized"  # This will hit the dedicated endpoint
+        
+        sargam = pipeline_result["sargam"]
+
+        print(f"\n✅ Generated files:")
+        print(f"   MusicXML: {musicxml_file}")
+        print(f"   MIDI: {midi_file} (normalized.mid)")
+
+        # --------------------------------
+        # STEP 5 — Return result
+        # --------------------------------
+        return JSONResponse({
+            "piano_only": piano_only,
+            "stems": {
+                name: f"/stems/{Path(path).name}"
+                for name, path in stem_paths.items()
+            },
+            "instruments": instruments,
+            "musicxml_file": musicxml_file,
+            "midi_file": midi_file,
+            "sargam_notation": sargam
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ✅ Universal file server for musicxml directory and subdirectories
+@router.get("/musicxml/{path:path}")
+async def serve_musicxml_files(path: str):
+    """
+    Serve MusicXML and MIDI files from the musicxml directory and subdirectories
+    """
+    file_path = MUSICXML_DIR / path
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"File not found: {path}")
+    
+    # Prevent directory traversal attacks
+    try:
+        file_path.resolve().relative_to(MUSICXML_DIR.resolve())
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Determine media type
+    if path.endswith('.musicxml') or path.endswith('.xml'):
+        media_type = "application/vnd.recordare.musicxml+xml"
+    elif path.endswith('.mid') or path.endswith('.midi'):
+        media_type = "audio/midi"
+    else:
+        media_type = "application/octet-stream"
+    
+    return FileResponse(
+        file_path,
+        media_type=media_type,
+        filename=file_path.name
+    )
+
+
+@router.get("/midi/normalized")
+async def get_normalized_midi():
+    """
+    Serve the always-normalized MIDI file:
+    backend/musicxml/poly_work/normalized.mid
+    """
+    normalized_path = MUSICXML_DIR / "poly_work" / "normalized.mid"
+
+    if not normalized_path.exists():
+        raise HTTPException(
+            status_code=404, 
+            detail="Normalized MIDI file not found"
+        )
+
+    return FileResponse(
+        normalized_path,
+        media_type="audio/midi",
+        filename="normalized.mid"
+    )

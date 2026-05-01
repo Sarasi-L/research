@@ -1,688 +1,812 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Music Separator & Instrument Detector</title>
+  <title>NoteScribe — Upload & Detect</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --bg:      #020221;
+      --bg2:     #07072e;
+      --surface: #07072e;
+      --surface2:#0d0d3a;
+      --surface3:#111840;
+      --blue:    #0096FF;
+      --blue2:   #38b6ff;
+      --bluedim: rgba(0,150,255,0.10);
+      --cyan:    #2dd4bf;
+      --green:   #22c55e;
+      --amber:   #f59e0b;
+      --purple:  #818cf8;
+      --pink:    #ec4899;
+      --red:     #ef4444;
+      --orange:  #fb923c;
+      --white:   #ffffff;
+      --muted:   rgba(255,255,255,0.42);
+      --muted2:  rgba(255,255,255,0.22);
+      --border:  rgba(0,150,255,0.12);
+      --border2: rgba(0,150,255,0.28);
+      --glow:    rgba(0,150,255,0.08);
+      --glow2:   rgba(0,150,255,0.16);
+      --mono:    'JetBrains Mono', monospace;
+      --sans:    'Outfit', sans-serif;
     }
 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      height: 100vh;
-      overflow: hidden;
-      background: #000000;
-      color: #00FF00;
+    *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+    html,body { width:100vw; height:100vh; overflow:hidden; background:var(--bg); color:var(--white); font-family:var(--sans); font-size:13px; }
+    ::-webkit-scrollbar { width:4px; height:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(0,150,255,.22); border-radius:2px; }
+
+    @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:.3} }
+    @keyframes spin    { to{transform:rotate(360deg)} }
+    @keyframes fadein  { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes waveanim { 0%,100%{transform:scaleY(.25);opacity:.35} 50%{transform:scaleY(1);opacity:1} }
+    @keyframes pulse   { 0%,100%{box-shadow:0 0 0 0 rgba(0,150,255,.4)} 50%{box-shadow:0 0 0 6px rgba(0,150,255,0)} }
+    @keyframes scanline { 0%{top:-100%} 100%{top:200%} }
+    @keyframes confgrow { from{width:0%} }
+
+    /* ── TITLEBAR ── */
+    .titlebar {
+      height:36px; background:rgba(2,2,33,.98);
+      border-bottom:1px solid rgba(255,255,255,.04);
+      display:flex; align-items:center; padding:0 16px;
+      flex-shrink:0; position:relative; z-index:200;
     }
+    .tb-dots { display:flex; gap:6px; margin-right:16px; }
+    .tb-dot  { width:10px; height:10px; border-radius:50%; cursor:pointer; transition:.15s; }
+    .tb-dot.close { background:#ef4444; } .tb-dot.close:hover { filter:brightness(1.3); }
+    .tb-dot.min   { background:#f59e0b; } .tb-dot.min:hover { filter:brightness(1.3); }
+    .tb-dot.max   { background:#22c55e; } .tb-dot.max:hover { filter:brightness(1.3); }
+    .tb-title  { font-family:var(--mono); font-size:11px; color:var(--muted); }
+    .tb-center { position:absolute; left:50%; transform:translateX(-50%); font-family:var(--mono); font-size:11px; color:var(--muted2); }
+    .tb-right  { margin-left:auto; display:flex; align-items:center; gap:7px; }
+    .tb-badge  { font-family:var(--mono); font-size:10px; padding:2px 8px; border-radius:3px; background:var(--bluedim); border:1px solid var(--border2); color:var(--blue2); }
 
-    .main-container {
-      display: flex;
-      height: 100vh;
+    /* ── MENUBAR ── */
+    .menubar { height:32px; background:rgba(7,7,46,.97); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 16px; gap:2px; flex-shrink:0; }
+    .menu-item { padding:4px 12px; font-size:12px; color:var(--muted); cursor:pointer; border-radius:4px; transition:all .15s; }
+    .menu-item:hover { background:var(--glow); color:var(--white); }
+    .menu-sep { width:1px; height:16px; background:var(--border); margin:0 4px; }
+
+    /* ── NAV TABS ── */
+    .navtabs { height:42px; background:var(--bg2); border-bottom:1px solid var(--border); display:flex; align-items:stretch; padding:0 0 0 16px; flex-shrink:0; }
+    .nav-tab { display:flex; align-items:center; gap:7px; padding:0 18px; font-size:12px; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; transition:all .2s; text-decoration:none; white-space:nowrap; }
+    .nav-tab:hover { color:var(--white); }
+    .nav-tab.active { color:var(--white); border-bottom-color:var(--blue); }
+    .nav-tab.locked { pointer-events:none; opacity:.35; }
+    .nav-tab .nt-num { font-family:var(--mono); font-size:9px; font-weight:700; padding:2px 5px; border-radius:3px; background:var(--glow); border:1px solid var(--border2); color:var(--blue2); }
+    .nav-tab.active .nt-num { background:var(--glow2); }
+    .nav-right { margin-left:auto; display:flex; align-items:center; gap:10px; padding-right:16px; }
+    .status-pill { display:flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10px; color:var(--muted); padding:3px 10px; border-radius:20px; border:1px solid var(--border); }
+    .status-dot { width:5px; height:5px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green); animation:blink 2s ease-in-out infinite; }
+
+    /* ── SHELL ── */
+    .shell { display:grid; grid-template-columns:264px 1fr; height:calc(100vh - 42px); }
+
+    /* ── SIDEBAR ── */
+    .sidebar { background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+    .sb-head  { padding:14px 14px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .sb-label { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+
+    /* Drop zone */
+    .drop-zone {
+      border:1.5px dashed var(--border2); border-radius:8px;
+      background:var(--glow); padding:18px 12px 14px;
+      text-align:center; cursor:pointer; transition:all .25s; position:relative; overflow:hidden;
     }
+    .drop-zone:hover, .drop-zone.drag-over { border-color:var(--blue); background:var(--glow2); }
+    .drop-zone::after { content:''; position:absolute; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--blue),transparent); animation:scanline 3s linear infinite; opacity:.3; }
+    .drop-zone input { display:none; }
+    .dz-icon { width:36px; height:36px; border-radius:7px; background:var(--glow2); border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; font-size:16px; margin:0 auto 8px; }
+    .dz-title { font-size:12px; font-weight:700; color:var(--white); margin-bottom:3px; }
+    .dz-sub   { font-size:10.5px; color:var(--muted); }
+    .dz-formats { display:flex; gap:4px; justify-content:center; margin-top:8px; flex-wrap:wrap; }
+    .fmt-pill { font-family:var(--mono); font-size:9px; font-weight:700; padding:2px 7px; border-radius:3px; background:rgba(0,150,255,.1); border:1px solid var(--border2); color:var(--blue2); }
 
-    /* Back Button */
-    .back-button {
-      position: fixed;
-      bottom: 30px;
-      left: 50px;
-      z-index: 1000;
-      padding: 10px 20px;
-      background: rgba(0, 255, 0, 0.1);
-      backdrop-filter: blur(10px);
-      color: #00FF00;
-      border: 2px solid #00FF00;
-      border-radius: 50px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: all 0.3s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+    /* File loaded */
+    .file-loaded { display:none; margin-top:8px; padding:8px 10px; background:rgba(34,197,94,.06); border:1px solid rgba(34,197,94,.2); border-radius:6px; }
+    .fl-row  { display:flex; align-items:center; gap:7px; }
+    .fl-icon { font-size:11px; }
+    .fl-name { font-size:11px; font-weight:600; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--white); }
+    .fl-clear { font-family:var(--mono); font-size:9px; color:var(--muted); cursor:pointer; padding:2px 6px; border:1px solid var(--border); border-radius:3px; background:transparent; transition:all .15s; }
+    .fl-clear:hover { border-color:rgba(239,68,68,.4); color:#f87171; }
+    .fl-meta { font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:3px; padding-left:18px; }
+
+    /* Analyze button */
+    .analyze-btn {
+      width:100%; margin-top:10px; padding:9px 14px;
+      background:var(--blue); color:#fff;
+      font-family:var(--sans); font-weight:700; font-size:12px;
+      letter-spacing:.8px; text-transform:uppercase;
+      border:none; border-radius:7px; cursor:pointer; transition:all .2s;
+      display:flex; align-items:center; justify-content:center; gap:7px;
     }
+    .analyze-btn:hover:not(:disabled) { background:#0077cc; box-shadow:0 0 20px rgba(0,150,255,.45); }
+    .analyze-btn:disabled { opacity:.35; cursor:not-allowed; }
 
-    .back-button:hover {
-      background: #00FF00;
-      color: #000000;
-      transform: translateX(-5px);
-      box-shadow: 0 0 30px rgba(0, 255, 0, 0.6);
+    /* Pipeline steps */
+    .sb-scroll { flex:1; overflow-y:auto; padding:12px 14px; }
+    .step-list { display:flex; flex-direction:column; gap:2px; margin-bottom:12px; }
+    .step-item { display:flex; align-items:center; gap:8px; padding:7px 9px; border-radius:5px; border:1px solid transparent; transition:all .25s; font-size:11px; color:var(--muted); }
+    .step-item.active { background:var(--glow); border-color:var(--border); color:var(--white); }
+    .step-item.done   { color:rgba(34,197,94,.9); }
+    .step-num  { width:18px; height:18px; border-radius:50%; border:1.5px solid var(--border2); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:8px; color:var(--muted); transition:all .25s; }
+    .step-item.active .step-num { border-color:var(--blue); color:var(--blue); }
+    .step-item.done   .step-num { border-color:var(--green); color:var(--green); background:rgba(34,197,94,.08); }
+    .step-text { flex:1; line-height:1.3; }
+    .step-desc { font-size:9px; color:var(--muted2); font-family:var(--mono); margin-top:1px; }
+
+    /* Sidebar info cards */
+    .sb-divider { height:1px; background:var(--border); margin:10px 0; }
+    .sb-info-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin-bottom:8px; }
+    .sic-title { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+    .sic-row   { display:flex; justify-content:space-between; align-items:center; padding:3px 0; }
+    .sic-lbl   { font-size:11px; color:var(--muted); }
+    .sic-val   { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--white); }
+    .sic-val.b { color:var(--blue2); }
+    .sic-val.g { color:var(--green); }
+    .sic-val.a { color:var(--amber); }
+
+    /* ── MAIN ── */
+    .main { background:var(--bg); display:flex; flex-direction:column; height:100%; overflow:hidden; }
+
+    .page-header {
+      padding:10px 18px; border-bottom:1px solid var(--border);
+      background:rgba(7,7,46,.6);
+      display:flex; align-items:center; gap:14px; flex-shrink:0;
     }
+    .ph-icon  { font-size:20px; }
+    .ph-title { font-size:14px; font-weight:800; color:var(--white); }
+    .ph-sub   { font-size:11px; color:var(--muted2); margin-top:1px; }
+    .ph-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+    .ph-badge { font-family:var(--mono); font-size:10px; font-weight:700; padding:3px 10px; border-radius:4px; display:none; }
+    .ph-badge.mono { background:var(--bluedim); border:1px solid var(--border2); color:var(--blue2); }
+    .ph-badge.poly { background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.3); color:var(--amber); }
 
-    .back-arrow {
-      font-size: 18px;
-      transition: transform 0.3s;
+    .main-content { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+    /* ── IDLE ── */
+    .idle-state {
+      flex:1; display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:10px; text-align:center; padding:40px;
     }
+    .idle-visual { font-size:36px; margin-bottom:4px; opacity:.2; }
+    .idle-wave { display:flex; align-items:center; gap:3px; height:32px; margin-bottom:4px; opacity:.15; }
+    .iw-bar { width:3px; border-radius:2px; background:var(--blue); }
+    .iw-bar:nth-child(1){height:10px} .iw-bar:nth-child(2){height:16px} .iw-bar:nth-child(3){height:24px}
+    .iw-bar:nth-child(4){height:30px} .iw-bar:nth-child(5){height:24px} .iw-bar:nth-child(6){height:16px} .iw-bar:nth-child(7){height:10px}
+    .idle-title { font-size:14px; font-weight:700; color:rgba(255,255,255,.25); }
+    .idle-desc  { font-size:11.5px; color:rgba(255,255,255,.15); max-width:320px; line-height:1.8; }
 
-    .back-button:hover .back-arrow {
-      transform: translateX(-3px);
+    /* ── PROGRESS ── */
+    .progress-panel { display:none; flex-direction:column; align-items:center; justify-content:center; flex:1; gap:16px; padding:32px; }
+    .prog-title { font-size:15px; font-weight:700; color:var(--white); }
+    .prog-sub   { font-family:var(--mono); font-size:11px; color:var(--blue2); }
+    .waveform-anim { display:flex; align-items:center; gap:3px; height:36px; }
+    .wa-bar { width:4px; border-radius:2px; background:var(--blue); animation:waveanim 1.2s ease-in-out infinite; }
+    .wa-bar:nth-child(1){height:8px;animation-delay:.0s} .wa-bar:nth-child(2){height:14px;animation-delay:.1s}
+    .wa-bar:nth-child(3){height:24px;animation-delay:.2s} .wa-bar:nth-child(4){height:32px;animation-delay:.3s}
+    .wa-bar:nth-child(5){height:24px;animation-delay:.4s} .wa-bar:nth-child(6){height:14px;animation-delay:.5s}
+    .wa-bar:nth-child(7){height:8px;animation-delay:.6s}
+    .prog-steps { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; width:100%; max-width:520px; }
+    .prog-step-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:12px; opacity:.4; transition:all .3s; }
+    .prog-step-card.running { opacity:1; border-color:var(--border2); background:var(--glow); }
+    .prog-step-card.done    { opacity:1; border-color:rgba(34,197,94,.25); background:rgba(34,197,94,.04); }
+    .psc-num { font-family:var(--mono); font-size:9px; font-weight:700; color:var(--muted); margin-bottom:6px; }
+    .prog-step-card.running .psc-num { color:var(--blue2); }
+    .prog-step-card.done .psc-num    { color:var(--green); }
+    .psc-name { font-size:11px; font-weight:600; color:var(--muted2); margin-bottom:6px; }
+    .psc-bar-track { height:2px; background:rgba(255,255,255,.06); border-radius:1px; overflow:hidden; }
+    .psc-bar { height:100%; width:0%; border-radius:1px; transition:width .7s ease; }
+    .prog-step-card.running .psc-bar { background:var(--blue); }
+    .prog-step-card.done .psc-bar    { background:var(--green); width:100%!important; }
+
+    /* ── RESULT PANEL ── */
+    .result-panel { display:none; flex-direction:column; flex:1; overflow:hidden; }
+
+    /* Result header bar */
+    .result-header {
+      padding:12px 18px; border-bottom:1px solid var(--border);
+      background:rgba(0,150,255,.04);
+      display:flex; align-items:center; gap:12px; flex-shrink:0;
     }
+    .rh-check { width:32px; height:32px; border-radius:8px; background:rgba(34,197,94,.12); border:1px solid rgba(34,197,94,.3); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+    .rh-meta  { flex:1; }
+    .rh-name  { font-size:13px; font-weight:700; color:var(--white); margin-bottom:2px; }
+    .rh-info  { font-family:var(--mono); font-size:10px; color:var(--muted); }
+    .rh-badge { font-family:var(--mono); font-size:10px; font-weight:700; padding:3px 10px; border-radius:4px; }
+    .rh-badge.mono { background:var(--bluedim); border:1px solid var(--border2); color:var(--blue2); }
+    .rh-badge.poly { background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.3); color:var(--amber); }
+    .rh-actions { display:flex; gap:7px; }
+    .btn-sm { padding:6px 14px; border-radius:6px; font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; cursor:pointer; transition:all .2s; border:none; font-family:var(--sans); }
+    .btn-primary { background:var(--blue); color:#fff; }
+    .btn-primary:hover { background:#0077cc; box-shadow:0 0 16px rgba(0,150,255,.4); }
+    .btn-ghost   { background:transparent; color:var(--muted); border:1px solid var(--border); }
+    .btn-ghost:hover { border-color:var(--border2); color:var(--white); }
 
-    /* Left Panel - Upload Section */
-    .left-panel {
-      width: 45%;
-      position: relative;
-      padding: 100px 80px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      border-right: 2px solid #00FF00;
-      background: url('assets/images/1.jpg') center/cover;
-      overflow: hidden;
+    /* Result body — 2×2 grid */
+    .result-body {
+      flex:1; display:grid;
+      grid-template-columns:1fr 1fr;
+      grid-template-rows:1fr 1fr;
+      gap:0; overflow:hidden;
     }
-
-    .left-panel::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.85);
-      z-index: 1;
+    .r-cell {
+      padding:16px 18px; border-right:1px solid var(--border); border-bottom:1px solid var(--border);
+      overflow:hidden; display:flex; flex-direction:column;
     }
+    .r-cell:nth-child(2) { border-right:none; }
+    .r-cell:nth-child(3) { border-bottom:none; }
+    .r-cell:nth-child(4) { border-right:none; border-bottom:none; }
+    .cell-label { font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:12px; flex-shrink:0; }
 
-    .left-panel > * {
-      position: relative;
-      z-index: 2;
+    /* Cell 1: Type Detection */
+    .type-row { display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+    .type-icon { width:52px; height:52px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; border:1px solid var(--border2); background:var(--glow2); }
+    .type-name { font-size:28px; font-weight:900; color:var(--white); line-height:1; margin-bottom:3px; }
+    .type-sub  { font-size:11px; color:var(--muted); margin-bottom:6px; }
+    .type-desc { font-size:11px; color:rgba(255,255,255,.35); line-height:1.6; }
+    .stat-row  { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:auto; }
+    .stat-box  { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:8px 10px; text-align:center; }
+    .stat-val  { font-family:var(--mono); font-size:16px; font-weight:700; color:var(--blue2); line-height:1; margin-bottom:2px; }
+    .stat-val.g { color:var(--green); }
+    .stat-val.a { color:var(--amber); }
+    .stat-lbl  { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+
+    /* Cell 2: Confidence */
+    .conf-big   { font-family:var(--mono); font-size:42px; font-weight:900; color:var(--blue2); line-height:1; margin-bottom:4px; }
+    .conf-lbl   { font-size:11px; color:var(--muted); margin-bottom:14px; }
+    .conf-track { height:8px; background:rgba(255,255,255,.06); border-radius:4px; overflow:hidden; margin-bottom:6px; }
+    .conf-fill  { height:100%; width:0%; border-radius:4px; background:linear-gradient(90deg,var(--blue),var(--cyan)); transition:width 1.2s cubic-bezier(.4,0,.2,1); }
+    .conf-marks { display:flex; justify-content:space-between; font-family:var(--mono); font-size:9px; color:rgba(255,255,255,.18); margin-bottom:14px; }
+    .conf-tier-list { display:flex; flex-direction:column; gap:5px; margin-top:auto; }
+    .conf-tier  { display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:5px; background:var(--surface2); border:1px solid var(--border); }
+    .ct-dot     { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+    .ct-label   { font-size:11px; color:var(--muted); flex:1; }
+    .ct-range   { font-family:var(--mono); font-size:10px; color:var(--muted2); }
+    .conf-tier.active { border-color:var(--border2); background:var(--glow); }
+    .conf-tier.active .ct-label { color:var(--white); }
+
+    /* Cell 3: Pipeline info */
+    .pi-title { font-size:15px; font-weight:700; color:var(--white); margin-bottom:6px; }
+    .pi-desc  { font-size:11px; color:rgba(255,255,255,.45); line-height:1.7; margin-bottom:12px; }
+    .pi-steps { display:flex; flex-direction:column; gap:4px; margin-top:auto; }
+    .pi-step  { display:flex; align-items:center; gap:9px; padding:6px 10px; border-radius:5px; background:var(--surface2); border:1px solid var(--border); font-size:11px; color:var(--muted); }
+    .pi-step-num { font-family:var(--mono); font-size:9px; font-weight:700; width:16px; height:16px; border-radius:50%; border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--blue2); }
+    .pi-tag-row { display:flex; gap:5px; flex-wrap:wrap; margin-top:10px; }
+    .pi-tag { font-family:var(--mono); font-size:9px; padding:2px 8px; border-radius:3px; background:var(--glow); border:1px solid var(--border2); color:var(--blue2); }
+
+    /* Cell 4: Analysis Route */
+    .route-visual { display:flex; flex-direction:column; gap:6px; margin-top:4px; }
+    .rv-node {
+      display:flex; align-items:center; gap:10px; padding:8px 12px;
+      border-radius:7px; background:var(--surface2); border:1px solid var(--border);
+      font-size:11px; color:var(--muted); transition:all .2s;
     }
-
-    .logo-section {
-      text-align: center;
-      margin-bottom: 50px;
-    }
-
-    .logo-section h1 {
-      font-size: 38px;
-      color: #00FF00;
-      text-shadow: 0 0 20px #00FF00;
-      margin-bottom: 15px;
-      font-weight: bold;
-      line-height: 1.3;
-    }
-
-    .logo-section p {
-      color: #00FF00;
-      font-size: 15px;
-      opacity: 0.8;
-      line-height: 1.6;
-      margin-bottom: 8px;
-    }
-
-    .upload-box {
-      background: rgba(0, 255, 0, 0.05);
-      border: 3px dashed #00FF00;
-      border-radius: 20px;
-      padding: 45px 30px;
-      text-align: center;
-      transition: all 0.3s;
-      cursor: pointer;
-      margin-bottom: 25px;
-    }
-
-    .upload-box:hover {
-      background: rgba(0, 255, 0, 0.1);
-      box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
-      transform: translateY(-2px);
-    }
-
-    .upload-icon {
-      font-size: 70px;
-      margin-bottom: 20px;
-    }
-
-    .upload-box h3 {
-      color: #00FF00;
-      font-size: 22px;
-      margin-bottom: 12px;
-    }
-
-    .upload-box p {
-      color: #00FF00;
-      opacity: 0.7;
-      margin-bottom: 10px;
-      font-size: 14px;
-    }
-
-    #audioFile {
-      display: none;
-    }
-
-    .file-name {
-      color: #00FF00;
-      font-size: 14px;
-      margin-top: 15px;
-      font-weight: bold;
-      padding: 10px;
-      background: rgba(0, 255, 0, 0.1);
-      border-radius: 10px;
-    }
-
-    #uploadBtn {
-      width: 100%;
-      padding: 16px 40px;
-      background: #00FF00;
-      color: #000000;
-      border: none;
-      border-radius: 50px;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: bold;
-      transition: all 0.3s;
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    #uploadBtn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 0 40px rgba(0, 255, 0, 0.8);
-    }
-
-    #uploadBtn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    /* Right Panel - Background Image & Results */
-    .right-panel {
-      width: 55%;
-      background: url('assets/images/451.jpg') center/cover;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-
-    .right-panel::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.75);
-      z-index: 1;
-    }
-
-    .result-container {
-      position: relative;
-      z-index: 10;
-      width: 85%;
-      max-width: 600px;
-      display: none;
-    }
-
-    /* Loading Animation */
-    .loading-steps {
-      text-align: center;
-    }
-
-    .step {
-      background: rgba(0, 255, 0, 0.1);
-      backdrop-filter: blur(10px);
-      border: 2px solid #00FF00;
-      border-radius: 15px;
-      padding: 25px;
-      margin-bottom: 20px;
-      opacity: 0;
-      transform: translateX(50px);
-      animation: slideIn 0.5s forwards;
-    }
-
-    @keyframes slideIn {
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
-
-    .step h3 {
-      color: #00FF00;
-      font-size: 18px;
-      margin-bottom: 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    .spinner {
-      border: 3px solid rgba(0, 255, 0, 0.3);
-      border-top: 3px solid #00FF00;
-      border-radius: 50%;
-      width: 30px;
-      height: 30px;
-      animation: spin 1s linear infinite;
-      display: inline-block;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .progress-bar-container {
-      width: 100%;
-      height: 8px;
-      background: rgba(0, 255, 0, 0.2);
-      border-radius: 10px;
-      overflow: hidden;
-      margin-top: 10px;
-    }
-
-    .progress-bar {
-      height: 100%;
-      background: #00FF00;
-      width: 0%;
-      transition: width 0.3s;
-      box-shadow: 0 0 10px #00FF00;
-    }
-
-    /* Result Display */
-    .result-card {
-      position: relative;
-      background: transparent;
-      border: none;
-      padding: 40px 30px;
-      text-align: center;
-      box-shadow: none;
-      display: none;
-      overflow: visible;
-    }
-
-    .result-card > * {
-      position: relative;
-      z-index: 3;
-    }
-
-    .checkmark {
-      font-size: 90px;
-      color: #00FF00;
-      margin-bottom: 30px;
-      animation: checkmarkPop 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) both;
-      text-shadow: 0 0 50px #00FF00, 0 0 100px rgba(0, 255, 0, 0.5);
-      display: block;
-    }
-
-    @keyframes checkmarkPop {
-      0% {
-        transform: scale(0) rotate(-180deg);
-        opacity: 0;
-      }
-      50% {
-        transform: scale(1.3) rotate(10deg);
-      }
-      100% {
-        transform: scale(1) rotate(0deg);
-        opacity: 1;
-      }
-    }
-
-    .result-card h2 {
-      color: #00FF00;
-      font-size: 22px;
-      margin-bottom: 25px;
-      text-transform: uppercase;
-      letter-spacing: 4px;
-      opacity: 0.85;
-      font-weight: 500;
-      animation: fadeIn 0.6s ease-out 0.3s both;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 0.85;
-        transform: translateY(0);
-      }
-    }
-
-    .detected-type {
-      font-size: 80px;
-      font-weight: bold;
-      color: #00FF00;
-      text-transform: uppercase;
-      margin: 35px 0;
-      text-shadow: 0 0 50px #00FF00, 0 0 100px rgba(0, 255, 0, 0.6), 0 0 150px rgba(0, 255, 0, 0.3);
-      letter-spacing: 8px;
-      line-height: 1.2;
-      animation: typeGlow 1s ease-in-out 0.5s both;
-      position: relative;
-      display: block;
-    }
-
-    @keyframes typeGlow {
-      0% {
-        opacity: 0;
-        transform: translateY(40px) scale(0.7);
-        filter: blur(15px);
-      }
-      60% {
-        transform: translateY(-15px) scale(1.08);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        filter: blur(0);
-      }
-    }
-
-    .detected-type::before {
-      content: '';
-      position: absolute;
-      bottom: -15px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0%;
-      height: 4px;
-      background: linear-gradient(90deg, transparent, #00FF00, transparent);
-      box-shadow: 0 0 25px #00FF00;
-      animation: underlineExpand 0.8s ease-out 0.9s both;
-    }
-
-    @keyframes underlineExpand {
-      from {
-        width: 0%;
-        opacity: 0;
-      }
-      to {
-        width: 90%;
-        opacity: 1;
-      }
-    }
-
-    .confidence {
-      font-size: 26px;
-      color: #00FF00;
-      opacity: 0;
-      margin-bottom: 50px;
-      margin-top: 35px;
-      font-weight: 500;
-      animation: fadeInUp 0.6s ease-out 1.2s both;
-      text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(25px);
-      }
-      to {
-        opacity: 0.9;
-        transform: translateY(0);
-      }
-    }
-
-    .go-deep-btn {
-      padding: 20px 60px;
-      background: #00FF00;
-      color: #000000;
-      border: 3px solid #00FF00;
-      border-radius: 50px;
-      cursor: pointer;
-      font-size: 20px;
-      font-weight: bold;
-      transition: all 0.3s;
-      box-shadow: 0 0 35px rgba(0, 255, 0, 0.6);
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      animation: buttonBounce 0.8s ease-out 1.5s both;
-      position: relative;
-      overflow: hidden;
-      display: inline-block;
-    }
-
-    @keyframes buttonBounce {
-      0% {
-        opacity: 0;
-        transform: translateY(35px) scale(0.9);
-      }
-      60% {
-        transform: translateY(-12px) scale(1.05);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    .go-deep-btn::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-    }
-
-    .go-deep-btn:hover::before {
-      width: 350px;
-      height: 350px;
-    }
-
-    .go-deep-btn:hover {
-      transform: translateY(-10px) scale(1.08);
-      box-shadow: 0 0 70px rgba(0, 255, 0, 1), 0 15px 50px rgba(0, 255, 0, 0.6);
-    }
-
-    .go-deep-btn span {
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Responsive */
-    @media (max-width: 1200px) {
-      .main-container {
-        flex-direction: column;
-      }
-
-      .left-panel,
-      .right-panel {
-        width: 100%;
-        min-height: 50vh;
-      }
-
-      .left-panel {
-        border-right: none;
-        border-bottom: 2px solid #00FF00;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .left-panel {
-        padding: 60px 30px;
-      }
-
-      .logo-section h1 {
-        font-size: 28px;
-      }
-
-      .detected-type {
-        font-size: 40px;
-      }
-    }
+    .rv-node.highlight { border-color:rgba(0,150,255,.4); background:rgba(0,150,255,.07); color:var(--white); }
+    .rv-node.highlight-amber { border-color:rgba(245,158,11,.4); background:rgba(245,158,11,.07); color:var(--white); }
+    .rv-icon { font-size:14px; flex-shrink:0; }
+    .rv-name { font-weight:600; flex:1; }
+    .rv-arrow { font-size:10px; color:var(--muted2); }
+    .rv-connector { width:1px; height:10px; background:var(--border); margin-left:21px; }
   </style>
 </head>
 <body>
-<!-- Back Button -->
-<button class="back-button" id="backBtn">
-  <span class="back-arrow">←</span>
-  <span>Back to Home</span>
-</button>
 
-<div class="main-container">
-  <!-- Left Panel: Upload Section -->
-  <div class="left-panel">
-    <div class="logo-section">
-      <h1>AUDIO UPLOAD & ANALYSIS</h1>
-      <p>Upload, analyze, and explore your music with professional-grade tools</p>
-      <p style="font-size: 13px; margin-top: 5px;">Perfect for learners, teachers, and music enthusiasts</p>
-    </div>
 
-    <div class="upload-box" onclick="document.getElementById('audioFile').click()">
-      <div class="upload-icon"></div>
-      <h3>Upload Your Audio File</h3>
-      <p>Click to browse or drag and drop</p>
-      <p style="font-size: 12px;">Supported formats: MP3, WAV, M4A, FLAC</p>
-      <div class="file-name" id="fileName"></div>
-    </div>
 
-    <input type="file" id="audioFile" accept="audio/*" />
-    
-    <button id="uploadBtn" disabled>
-      ANALYZE AUDIO
-    </button>
-  </div>
-
-  <!-- Right Panel: Background & Results -->
-  <div class="right-panel">
-    <div class="result-container" id="resultContainer">
-      <!-- Loading Steps -->
-      <div class="loading-steps" id="loadingSteps" style="display: none;">
-        <div class="step" id="step1" style="animation-delay: 0s;">
-          <h3><div class="spinner"></div> Step 1: Uploading Audio File</h3>
-          <div class="progress-bar-container">
-            <div class="progress-bar" id="progressBar1"></div>
-          </div>
-        </div>
-        <div class="step" id="step2" style="animation-delay: 0.2s; display: none;">
-          <h3><div class="spinner"></div> Step 2: Analyzing Audio Signal</h3>
-          <div class="progress-bar-container">
-            <div class="progress-bar" id="progressBar2"></div>
-          </div>
-        </div>
-        <div class="step" id="step3" style="animation-delay: 0.4s; display: none;">
-          <h3><div class="spinner"></div> Step 3: Detecting Audio Type</h3>
-          <div class="progress-bar-container">
-            <div class="progress-bar" id="progressBar3"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Result Card -->
-      <div class="result-card" id="resultCard">
-        <div class="checkmark">✓</div>
-        <h2>Audio Type Detected</h2>
-        <div class="detected-type" id="detectedType">MONOPHONIC</div>
-        <div class="confidence" id="confidence">Confidence: 95.3%</div>
-        <button class="go-deep-btn" id="goDeepBtn">
-          <span>→ GO DEEPER</span>
-        </button>
-      </div>
-    </div>
+<!-- ── NAV TABS ── -->
+<div class="navtabs">
+  <a class="nav-tab active" href="index.html" id="navStep1">
+    <span class="nt-num">01</span> Upload &amp; Detect
+  </a>
+  <a class="nav-tab locked" href="#" id="navStep2">
+    <span class="nt-num">02</span> Monophonic Analysis
+  </a>
+  <a class="nav-tab locked" href="#" id="navStep3">
+    <span class="nt-num">03</span> Polyphonic Analysis
+  </a>
+  <div class="nav-right">
+    <div class="status-pill"><div class="status-dot"></div> System Ready</div>
   </div>
 </div>
 
+<!-- ── SHELL ── -->
+<div class="shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="sb-label">Source Audio</div>
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('audioFile').click()">
+        <input type="file" id="audioFile" accept="audio/*">
+        <div class="dz-icon">🎵</div>
+        <div class="dz-title">Drop audio file here</div>
+        <div class="dz-sub">Click to browse · supports</div>
+        <div class="dz-formats">
+          <span class="fmt-pill">MP3</span>
+          <span class="fmt-pill">WAV</span>
+          <span class="fmt-pill">M4A</span>
+          <span class="fmt-pill">FLAC</span>
+        </div>
+      </div>
+      <div class="file-loaded" id="fileLoaded">
+        <div class="fl-row">
+          <span class="fl-icon">📄</span>
+          <span class="fl-name" id="flName">—</span>
+          <button class="fl-clear" onclick="clearSession()">✕</button>
+        </div>
+        <div class="fl-meta" id="flMeta">—</div>
+      </div>
+      <button class="analyze-btn" id="analyzeBtn" disabled>▶ Analyze Audio</button>
+    </div>
+
+    <div class="sb-scroll">
+      <div class="sb-label">Detection Pipeline</div>
+      <div class="step-list">
+        <div class="step-item" id="wf1">
+          <div class="step-num">1</div>
+          <div class="step-text"><div>Load Audio</div><div class="step-desc">File input & validation</div></div>
+        </div>
+        <div class="step-item" id="wf2">
+          <div class="step-num">2</div>
+          <div class="step-text"><div>Signal Analysis</div><div class="step-desc">Spectral feature extraction</div></div>
+        </div>
+        <div class="step-item" id="wf3">
+          <div class="step-num">3</div>
+          <div class="step-text"><div>Type Classification</div><div class="step-desc">Mono / polyphonic detection</div></div>
+        </div>
+        <div class="step-item" id="wf4">
+          <div class="step-num">4</div>
+          <div class="step-text"><div>Route Pipeline</div><div class="step-desc">Deep analysis begins</div></div>
+        </div>
+      </div>
+
+      <div class="sb-divider"></div>
+      <div class="sb-label">Session Info</div>
+      <div class="sb-info-card" id="sessionCard">
+        <div class="sic-title">Last Analysis</div>
+        <div class="sic-row"><span class="sic-lbl">Status</span><span class="sic-val" id="sicStatus">—</span></div>
+        <div class="sic-row"><span class="sic-lbl">Type</span><span class="sic-val b" id="sicType">—</span></div>
+        <div class="sic-row"><span class="sic-lbl">Confidence</span><span class="sic-val g" id="sicConf">—</span></div>
+        <div class="sic-row"><span class="sic-lbl">File</span><span class="sic-val" id="sicFile" style="font-size:10px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</span></div>
+      </div>
+
+      <div class="sb-divider"></div>
+      <div class="sb-label">Supported Formats</div>
+      <div class="sb-info-card">
+        <div class="sic-row"><span class="sic-lbl">MP3</span><span class="sic-val" style="font-size:10px;color:var(--muted2)">MPEG Layer 3</span></div>
+        <div class="sic-row"><span class="sic-lbl">WAV</span><span class="sic-val" style="font-size:10px;color:var(--muted2)">Waveform Audio</span></div>
+        <div class="sic-row"><span class="sic-lbl">M4A</span><span class="sic-val" style="font-size:10px;color:var(--muted2)">MPEG-4 Audio</span></div>
+        <div class="sic-row"><span class="sic-lbl">FLAC</span><span class="sic-val" style="font-size:10px;color:var(--muted2)">Lossless Audio</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+    <div class="page-header">
+      <div class="ph-icon"></div>
+      <div>
+        <div class="ph-title">Audio Upload &amp; Type Detection</div>
+        <div class="ph-sub">Upload an audio file to begin the transcription pipeline</div>
+      </div>
+      <div class="ph-right">
+        <span class="ph-badge" id="phBadge"></span>
+      </div>
+    </div>
+
+    <div class="main-content">
+
+      <!-- IDLE -->
+      <div class="idle-state" id="idleState">
+        <div class="idle-visual">🎼</div>
+        <div class="idle-wave">
+          <div class="iw-bar"></div><div class="iw-bar"></div><div class="iw-bar"></div>
+          <div class="iw-bar"></div><div class="iw-bar"></div><div class="iw-bar"></div><div class="iw-bar"></div>
+        </div>
+        <div class="idle-title">No audio loaded</div>
+        <div class="idle-desc">Upload an audio file using the panel on the left. The system will detect whether the audio is monophonic or polyphonic and route accordingly.</div>
+      </div>
+
+      <!-- PROGRESS -->
+      <div class="progress-panel" id="progressPanel">
+        <div class="prog-title">Analyzing Audio Signal</div>
+        <div class="prog-sub" id="progSub">Initializing detection pipeline…</div>
+        <div class="waveform-anim">
+          <div class="wa-bar"></div><div class="wa-bar"></div><div class="wa-bar"></div>
+          <div class="wa-bar"></div><div class="wa-bar"></div><div class="wa-bar"></div><div class="wa-bar"></div>
+        </div>
+        <div class="prog-steps">
+          <div class="prog-step-card" id="pc1">
+            <div class="psc-num">STEP 01</div>
+            <div class="psc-name">Uploading File</div>
+            <div class="psc-bar-track"><div class="psc-bar" id="pb1"></div></div>
+          </div>
+          <div class="prog-step-card" id="pc2">
+            <div class="psc-num">STEP 02</div>
+            <div class="psc-name">Feature Extraction</div>
+            <div class="psc-bar-track"><div class="psc-bar" id="pb2"></div></div>
+          </div>
+          <div class="prog-step-card" id="pc3">
+            <div class="psc-num">STEP 03</div>
+            <div class="psc-name">Classifying Type</div>
+            <div class="psc-bar-track"><div class="psc-bar" id="pb3"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULT -->
+      <div class="result-panel" id="resultPanel">
+
+        <div class="result-header">
+          <div class="rh-check">✓</div>
+          <div class="rh-meta">
+            <div class="rh-name" id="rhName">—</div>
+            <div class="rh-info" id="rhInfo">—</div>
+          </div>
+          <div class="rh-badge" id="rhBadge">—</div>
+          <div class="rh-actions">
+            <button class="btn-sm btn-primary" id="proceedBtn">Proceed →</button>
+            <button class="btn-sm btn-ghost"   id="newFileBtn">New File</button>
+          </div>
+        </div>
+
+        <div class="result-body">
+
+          <!-- Cell 1: Type Detection -->
+          <div class="r-cell">
+            <div class="cell-label">Audio Type Detection</div>
+            <div class="type-row">
+              <div class="type-icon" id="typeIcon">🎵</div>
+              <div>
+                <div class="type-name" id="typeName">—</div>
+                <div class="type-sub"  id="typeSub">—</div>
+                <div class="type-desc" id="typeDesc">—</div>
+              </div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-box"><div class="stat-val" id="statType">—</div><div class="stat-lbl">Type</div></div>
+              <div class="stat-box"><div class="stat-val g" id="statConf">—</div><div class="stat-lbl">Confidence</div></div>
+              <div class="stat-box"><div class="stat-val a" id="statPipe">—</div><div class="stat-lbl">Pipeline</div></div>
+              <div class="stat-box"><div class="stat-val" style="color:var(--green)">✓</div><div class="stat-lbl">Status</div></div>
+            </div>
+          </div>
+
+          <!-- Cell 2: Confidence -->
+          <div class="r-cell">
+            <div class="cell-label">Detection Confidence</div>
+            <div class="conf-big" id="confBig">—</div>
+            <div class="conf-lbl">Classification Score</div>
+            <div class="conf-track"><div class="conf-fill" id="confFill"></div></div>
+            <div class="conf-marks">
+              <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+            </div>
+            <div class="conf-tier-list">
+              <div class="conf-tier" id="tier1">
+                <div class="ct-dot" style="background:var(--green)"></div>
+                <div class="ct-label">High Confidence</div>
+                <div class="ct-range">≥ 80%</div>
+              </div>
+              <div class="conf-tier" id="tier2">
+                <div class="ct-dot" style="background:var(--amber)"></div>
+                <div class="ct-label">Medium Confidence</div>
+                <div class="ct-range">50–79%</div>
+              </div>
+              <div class="conf-tier" id="tier3">
+                <div class="ct-dot" style="background:var(--red)"></div>
+                <div class="ct-label">Low Confidence</div>
+                <div class="ct-range">&lt; 50%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cell 3: Pipeline Steps -->
+          <div class="r-cell">
+            <div class="cell-label">Analysis Pipeline</div>
+            <div class="pi-title" id="piTitle">—</div>
+            <div class="pi-desc"  id="piDesc">—</div>
+            <div class="pi-steps" id="piSteps"></div>
+            <div class="pi-tag-row" id="piTags"></div>
+          </div>
+
+          <!-- Cell 4: Routing -->
+          <div class="r-cell">
+            <div class="cell-label">Analysis Route</div>
+            <div class="route-visual" id="routeVisual">
+              <div class="rv-node" id="rn0">
+                <span class="rv-icon">📂</span>
+                <span class="rv-name">Audio Input</span>
+                <span class="rv-arrow">→</span>
+              </div>
+              <div class="rv-connector"></div>
+              <div class="rv-node" id="rn1">
+                <span class="rv-icon">🔍</span>
+                <span class="rv-name">Type Detection</span>
+                <span class="rv-arrow">→</span>
+              </div>
+              <div class="rv-connector"></div>
+              <div class="rv-node" id="rn2">
+                <span class="rv-icon">🔀</span>
+                <span class="rv-name">Pipeline Router</span>
+                <span class="rv-arrow">→</span>
+              </div>
+              <div class="rv-connector"></div>
+              <div class="rv-node" id="rn3">
+                <span class="rv-icon" id="rnDestIcon">🎵</span>
+                <span class="rv-name" id="rnDestName">Awaiting detection…</span>
+                <span class="rv-arrow">→</span>
+              </div>
+              <div class="rv-connector"></div>
+              <div class="rv-node" id="rn4">
+                <span class="rv-icon">📄</span>
+                <span class="rv-name">MusicXML Output</span>
+                <span class="rv-arrow">✓</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
 <script>
-let uploadedFileName = null;
-let detectedType = null;
+const LS_KEY = 'notescribe_last_result';
+let currentFile = null;
+let detectedResult = null;
 
-// Back button functionality
-document.getElementById("backBtn").addEventListener("click", () => {
-  document.body.style.opacity = "0.7";
-  document.body.style.transition = "opacity 0.3s ease";
-  setTimeout(() => {
-    window.location.href = "landing.html";
-  }, 300);
+const audioFileInput = document.getElementById('audioFile');
+const dropZone       = document.getElementById('dropZone');
+const analyzeBtn     = document.getElementById('analyzeBtn');
+const fileLoaded     = document.getElementById('fileLoaded');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) selectFile(f);
 });
+audioFileInput.addEventListener('change', e => { if (e.target.files[0]) selectFile(e.target.files[0]); });
 
-// File selection handling
-document.getElementById("audioFile").addEventListener("change", (e) => {
-  const fileName = e.target.files[0]?.name;
-  if (fileName) {
-    document.getElementById("fileName").textContent = `Selected: ${fileName}`;
-    document.getElementById("uploadBtn").disabled = false;
+function selectFile(file) {
+  currentFile = file;
+  analyzeBtn.disabled = false;
+  setWf(1);
+  fileLoaded.style.display = 'block';
+  document.getElementById('flName').textContent = file.name;
+  document.getElementById('flMeta').textContent = (file.size / (1024*1024)).toFixed(2) + ' MB · ' + file.type;
+  document.getElementById('idleState').style.display = 'flex';
+  document.getElementById('resultPanel').style.display = 'none';
+  document.getElementById('phBadge').style.display = 'none';
+}
+
+function setWf(active) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('wf' + i);
+    el.classList.remove('active', 'done');
+    if (i < active) el.classList.add('done');
+    else if (i === active) el.classList.add('active');
   }
-});
+}
 
-// Upload button click
-document.getElementById("uploadBtn").onclick = async () => {
-  const fileInput = document.getElementById("audioFile");
-  if (!fileInput.files.length) {
-    alert("Please select an audio file first");
-    return;
+function setProgress(active) {
+  const msgs = ['Uploading file to server…', 'Extracting spectral features…', 'Classifying audio type…'];
+  for (let i = 1; i <= 3; i++) {
+    const card = document.getElementById('pc' + i);
+    const bar  = document.getElementById('pb' + i);
+    card.classList.remove('running', 'done');
+    if (i < active) { card.classList.add('done'); bar.style.width = '100%'; }
+    else if (i === active) {
+      card.classList.add('running');
+      setTimeout(() => { bar.style.width = '75%'; }, 100);
+      document.getElementById('progSub').textContent = msgs[i - 1];
+    } else { bar.style.width = '0%'; }
   }
+}
 
+analyzeBtn.onclick = async () => {
+  if (!currentFile) return;
   const formData = new FormData();
-  formData.append("file", fileInput.files[0]);
+  formData.append('file', currentFile);
 
-  // Show loading steps
-  const resultContainer = document.getElementById("resultContainer");
-  const loadingSteps = document.getElementById("loadingSteps");
-  const resultCard = document.getElementById("resultCard");
-  
-  resultContainer.style.display = "block";
-  loadingSteps.style.display = "block";
-  resultCard.style.display = "none";
-
-  // Animate progress bars
-  setTimeout(() => {
-    document.getElementById("progressBar1").style.width = "100%";
-  }, 500);
-
-  setTimeout(() => {
-    document.getElementById("step2").style.display = "block";
-    document.getElementById("progressBar2").style.width = "100%";
-  }, 1500);
-
-  setTimeout(() => {
-    document.getElementById("step3").style.display = "block";
-    document.getElementById("progressBar3").style.width = "100%";
-  }, 3000);
+  document.getElementById('idleState').style.display    = 'none';
+  document.getElementById('resultPanel').style.display  = 'none';
+  const pp = document.getElementById('progressPanel');
+  pp.style.display = 'flex'; pp.style.flexDirection = 'column';
+  analyzeBtn.disabled = true;
+  setWf(2); setProgress(1);
+  setTimeout(() => { document.getElementById('pb1').style.width = '100%'; }, 150);
+  setTimeout(() => { setProgress(2); setWf(3); }, 1000);
+  setTimeout(() => { setProgress(3); setWf(4); }, 2100);
 
   try {
-    const res = await fetch("http://127.0.0.1:8000/upload/", {
-      method: "POST",
-      body: formData
-    });
-
-    if (!res.ok) {
-      throw new Error(await res.text());
-    }
-
+    const res = await fetch('http://127.0.0.1:8000/upload/', { method: 'POST', body: formData });
+    if (!res.ok) throw new Error(await res.text());
     const result = await res.json();
-    uploadedFileName = result.filename;
-    detectedType = result.type;
+    detectedResult = result;
 
-    // Show result after loading
     setTimeout(() => {
-      loadingSteps.style.display = "none";
-      resultCard.style.display = "block";
-      
-      document.getElementById("detectedType").textContent = result.type.toUpperCase();
-      document.getElementById("confidence").textContent = 
-        `Confidence: ${(result.confidence * 100).toFixed(1)}%`;
-    }, 4500);
+      document.getElementById('pc3').classList.add('done');
+      document.getElementById('pc3').classList.remove('running');
+      document.getElementById('pb3').style.width = '100%';
+
+      localStorage.setItem(LS_KEY, JSON.stringify({
+        filename: result.filename, type: result.type,
+        confidence: result.confidence, timestamp: Date.now()
+      }));
+
+      setTimeout(() => {
+        pp.style.display = 'none';
+        showResult(result);
+        updateNavTabs(result.type, result.filename);
+      }, 500);
+    }, 1200);
 
   } catch (err) {
     console.error(err);
-    alert(`Error: ${err.message}`);
-    resultContainer.style.display = "none";
+    alert('Upload error: ' + err.message);
+    document.getElementById('progressPanel').style.display = 'none';
+    document.getElementById('idleState').style.display = 'flex';
+    analyzeBtn.disabled = false;
+    setWf(1);
   }
 };
 
-// Go Deeper button
-document.getElementById("goDeepBtn").onclick = () => {
-  if (!uploadedFileName) return;
+function showResult(result) {
+  const isMono = result.type === 'monophonic';
+  const pct = (result.confidence * 100).toFixed(1);
 
-  if (detectedType === "monophonic") {
-    window.location.href = `monophonic.html?file=${encodeURIComponent(uploadedFileName)}`;
+  // Header
+  document.getElementById('rhName').textContent = result.filename;
+  document.getElementById('rhInfo').textContent = `Analyzed · ${isMono ? 'Monophonic' : 'Polyphonic'} · ${pct}% confidence`;
+  const rhBadge = document.getElementById('rhBadge');
+  rhBadge.textContent = isMono ? 'MONOPHONIC' : 'POLYPHONIC';
+  rhBadge.className = 'rh-badge ' + (isMono ? 'mono' : 'poly');
+
+  // Page header badge
+  const phBadge = document.getElementById('phBadge');
+  phBadge.textContent = isMono ? 'MONOPHONIC' : 'POLYPHONIC';
+  phBadge.className = 'ph-badge ' + (isMono ? 'mono' : 'poly');
+  phBadge.style.display = 'inline-block';
+
+  // Cell 1
+  document.getElementById('typeIcon').textContent = isMono ? '🎵' : '🎹';
+  document.getElementById('typeName').textContent = isMono ? 'Monophonic' : 'Polyphonic';
+  document.getElementById('typeSub').textContent  = isMono ? 'Single-melody pipeline' : 'Multi-layer pipeline';
+  document.getElementById('typeDesc').textContent = isMono
+    ? 'Single voice or instrument. Pitch detection, rhythm & key analysis.'
+    : 'Multiple concurrent voices. Source separation → per-stem analysis.';
+  document.getElementById('statType').textContent = isMono ? 'MONO' : 'POLY';
+  document.getElementById('statConf').textContent = pct + '%';
+  document.getElementById('statPipe').textContent = isMono ? 'Solo' : 'Multi';
+
+  // Cell 2 — confidence
+  document.getElementById('confBig').textContent = pct + '%';
+  setTimeout(() => { document.getElementById('confFill').style.width = pct + '%'; }, 100);
+  const confNum = parseFloat(pct);
+  document.getElementById('tier1').classList.toggle('active', confNum >= 80);
+  document.getElementById('tier2').classList.toggle('active', confNum >= 50 && confNum < 80);
+  document.getElementById('tier3').classList.toggle('active', confNum < 50);
+
+  // Cell 3 — pipeline
+  document.getElementById('piTitle').textContent = isMono ? 'Monophonic Analysis Pipeline' : 'Polyphonic Analysis Pipeline';
+  document.getElementById('piDesc').textContent  = isMono
+    ? 'Pitch detection using YIN/pYIN algorithm, rhythm & beat estimation, key signature detection, MusicXML generation.'
+    : 'Demucs source separation into stems, multi-instrument detection, per-stem transcription, ensemble MusicXML assembly.';
+
+  const steps = isMono
+    ? ['Pitch Tracking (YIN/pYIN)', 'Tempo & Beat Estimation', 'Key Signature Detection', 'MusicXML Generation']
+    : ['Demucs Stem Separation', 'Instrument Classification', 'Per-Stem Transcription', 'MusicXML Assembly'];
+  document.getElementById('piSteps').innerHTML = steps.map((s, i) =>
+    `<div class="pi-step"><div class="pi-step-num">${i+1}</div>${s}</div>`
+  ).join('');
+
+  const tags = isMono
+    ? ['Pitch Tracking', 'Tempo Estimation', 'Key Detection', 'MusicXML']
+    : ['Source Separation', 'Demucs', 'Multi-instrument', 'MusicXML'];
+  document.getElementById('piTags').innerHTML = tags.map(t => `<span class="pi-tag">${t}</span>`).join('');
+
+  // Cell 4 — route
+  ['rn0','rn1','rn2'].forEach(id => {
+    document.getElementById(id).classList.add('highlight');
+  });
+  const rn3 = document.getElementById('rn3');
+  rn3.classList.add(isMono ? 'highlight' : 'highlight-amber');
+  document.getElementById('rnDestIcon').textContent = isMono ? '🎵' : '🎼';
+  document.getElementById('rnDestName').textContent = isMono ? 'Monophonic Analysis' : 'Polyphonic Analysis';
+  document.getElementById('rn4').classList.add('highlight');
+
+  // Sidebar session info
+  document.getElementById('sicStatus').textContent = '✓ Done';
+  document.getElementById('sicStatus').style.color = 'var(--green)';
+  document.getElementById('sicType').textContent   = isMono ? 'Monophonic' : 'Polyphonic';
+  document.getElementById('sicConf').textContent   = pct + '%';
+  document.getElementById('sicFile').textContent   = result.filename;
+
+  const rp = document.getElementById('resultPanel');
+  rp.style.display = 'flex'; rp.style.flexDirection = 'column';
+  analyzeBtn.disabled = false;
+}
+
+function updateNavTabs(type, filename) {
+  const isMono = type === 'monophonic';
+  const step2  = document.getElementById('navStep2');
+  const step3  = document.getElementById('navStep3');
+  if (isMono) {
+    step2.href = 'monophonic.html?file=' + encodeURIComponent(filename);
+    step2.classList.remove('locked'); step2.style.pointerEvents = ''; step2.style.opacity = '1';
+    step3.classList.add('locked');    step3.style.pointerEvents = 'none'; step3.style.opacity = '.35';
   } else {
-    window.location.href = `polyphonic.html?file=${encodeURIComponent(uploadedFileName)}`;
+    step3.href = 'polyphonic.html?file=' + encodeURIComponent(filename);
+    step3.classList.remove('locked'); step3.style.pointerEvents = ''; step3.style.opacity = '1';
+    step2.classList.add('locked');    step2.style.pointerEvents = 'none'; step2.style.opacity = '.35';
   }
+}
+
+document.getElementById('proceedBtn').onclick = () => {
+  const saved = getSaved();
+  if (!saved) return;
+  const dest = saved.type === 'monophonic' ? 'monophonic.html' : 'polyphonic.html';
+  window.location.href = dest + '?file=' + encodeURIComponent(saved.filename);
 };
+document.getElementById('newFileBtn').onclick = () => clearSession();
+
+function clearSession() {
+  localStorage.removeItem(LS_KEY);
+  currentFile = null; detectedResult = null;
+  audioFileInput.value = '';
+  fileLoaded.style.display = 'none';
+  analyzeBtn.disabled = true;
+  document.getElementById('resultPanel').style.display = 'none';
+  document.getElementById('idleState').style.display   = 'flex';
+  document.getElementById('phBadge').style.display     = 'none';
+  setWf(0);
+  ['navStep2','navStep3'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.add('locked'); el.style.pointerEvents = 'none'; el.style.opacity = '.35';
+  });
+  document.getElementById('sicStatus').textContent = '—';
+  document.getElementById('sicStatus').style.color = '';
+  document.getElementById('sicType').textContent   = '—';
+  document.getElementById('sicConf').textContent   = '—';
+  document.getElementById('sicFile').textContent   = '—';
+}
+
+function getSaved() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)); } catch { return null; }
+}
+
+(function restoreFromStorage() {
+  const saved = getSaved();
+  if (!saved || !saved.filename) return;
+  detectedResult = saved;
+  showResult({ filename: saved.filename, type: saved.type, confidence: saved.confidence });
+  const ago = timeSince(saved.timestamp);
+  document.getElementById('rhInfo').textContent = `Last session · ${saved.type} · ${ago}`;
+  updateNavTabs(saved.type, saved.filename);
+  analyzeBtn.disabled = false;
+  setWf(4);
+  document.getElementById('idleState').style.display = 'none';
+  fileLoaded.style.display = 'block';
+  document.getElementById('flName').textContent = saved.filename;
+  document.getElementById('flMeta').textContent = `Cached · ${saved.type}`;
+})();
+
+function timeSince(ts) {
+  if (!ts) return 'previously';
+  const mins = Math.floor((Date.now() - ts) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + ' min ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  return Math.floor(hrs / 24) + 'd ago';
+}
 </script>
 </body>
 </html>

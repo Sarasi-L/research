@@ -4,7 +4,7 @@ from backend.services.polyphonic.detect_piano_from_stems import detect_piano_fro
 import os
 
 # input song (in project root)
-audio_file = "mix11.mp3"   # change to your file name
+audio_file = "polysong.mp3"   # change to your file name
 
 # output folder for stems
 output_dir = "demucs_output"
