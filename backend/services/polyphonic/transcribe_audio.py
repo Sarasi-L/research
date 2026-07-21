@@ -8,16 +8,12 @@ from services.polyphonic.multipitch_detection import detect_multipitch
 
 
 def transcribe_with_onsets_frames(audio_path: str, output_dir: Path):
-    """
-    Primary transcription using Onsets & Frames (via detect_multipitch)
-    Falls back to Basic Pitch if detection fails
-    """
+   
 
     print("\n[TRANSCRIBE] Using Onsets & Frames...")
 
     notes = detect_multipitch(audio_path, post_process=True)
 
-    # Fallback check
     if not notes or len(notes) < 10:
         print("[TRANSCRIBE] Too few notes detected, falling back to Basic Pitch")
 

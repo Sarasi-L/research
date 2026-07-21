@@ -3,9 +3,7 @@
 import pretty_midi
 
 def apply_time_signature(midi_path: str, numerator: int, denominator: int, output_path: str):
-    """
-    Add time signature event to MIDI.
-    """
+   
     midi = pretty_midi.PrettyMIDI(midi_path)
 
     ts = pretty_midi.TimeSignature(numerator=numerator,

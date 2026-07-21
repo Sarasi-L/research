@@ -1,0 +1,339 @@
+[33mda0959f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Updated
+ .gitignore | 4 [32m+++[m[31m-[m
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+[33mbbd0080[m Full completed research
+ MonoPoly_Classifer.ipynb                           |    1 [31m-[m
+ backend/compare_mon.py                             |  150 [32m+[m
+ backend/evaluate_monophonic.py                     |  148 [32m+[m
+ backend/generate_direct_midis.py                   |  114 [32m+[m
+ backend/musicxml/final_polyphonic.mid              |  Bin [31m2973[m -> [32m1700[m bytes
+ backend/musicxml/final_polyphonic.musicxml         | 7620 [32m+++++++[m[31m-------------[m
+ backend/musicxml/joy_to_the_world.mp3.mid          |  Bin [31m0[m -> [32m349[m bytes
+ backend/musicxml/joy_to_the_world.mp3.musicxml     |    4 [32m+[m[31m-[m
+ backend/musicxml/mono5.mp3.mid                     |  Bin [31m0[m -> [32m1454[m bytes
+ backend/musicxml/mono5.mp3.musicxml                | 1854 [32m+++++[m
+ backend/musicxml/mono5.mp3_direct.mid              |  Bin [31m0[m -> [32m1077[m bytes
+ backend/musicxml/mono6.mp3.mid                     |  Bin [31m0[m -> [32m322[m bytes
+ backend/musicxml/mono6.mp3.musicxml                |  157 [32m+[m[31m-[m
+ backend/musicxml/mono6.mp3_direct.mid              |  Bin [31m0[m -> [32m236[m bytes
+ backend/musicxml/mono7.mp3.mid                     |  Bin [31m0[m -> [32m965[m bytes
+ backend/musicxml/mono7.mp3.musicxml                |  797 [32m+[m[31m-[m
+ backend/musicxml/mono7.mp3_direct.mid              |  Bin [31m0[m -> [32m709[m bytes
+ backend/musicxml/poly_work/cleaned.mid             |  Bin [31m3218[m -> [32m1956[m bytes
+ backend/musicxml/poly_work/filtered.mid            |  Bin [31m3008[m -> [32m1717[m bytes
+ backend/musicxml/poly_work/merged.mid              |  Bin [31m3218[m -> [32m1956[m bytes
+ backend/musicxml/poly_work/midis/bass.mid          |  Bin [31m740[m -> [32m334[m bytes
+ backend/musicxml/poly_work/midis/drums.mid         |  Bin [31m266[m -> [32m295[m bytes
+ backend/musicxml/poly_work/midis/other.mid         |  Bin [31m1890[m -> [32m1245[m bytes
+ backend/musicxml/poly_work/midis/vocals.mid        |  Bin [31m445[m -> [32m205[m bytes
+ backend/musicxml/poly_work/normalized.mid          |  Bin [31m2973[m -> [32m1700[m bytes
+ backend/musicxml/poly_work/quantized.mid           |  Bin [31m3022[m -> [32m1726[m bytes
+ backend/musicxml/poly_work/with_key.mid            |  Bin [31m2973[m -> [32m1700[m bytes
+ backend/musicxml/poly_work/with_tempo.mid          |  Bin [31m2967[m -> [32m1694[m bytes
+ backend/musicxml/poly_work/with_time.mid           |  Bin [31m3030[m -> [32m1734[m bytes
+ backend/outputs/output.mid                         |  Bin [31m0[m -> [32m904[m bytes
+ backend/outputs/output.xml                         | 1499 [32m++++[m
+ backend/outputs/output_sargam.txt                  |    1 [32m+[m
+ backend/routers/upload.py                          |   57 [32m+[m[31m-[m
+ backend/run_monophonic_debug_test.py               |  255 [32m+[m
+ .../services/cross_notation/test_midi_to_sargam.py |   26 [32m+[m[31m-[m
+ backend/services/detect_instruments.py             |   50 [32m+[m[31m-[m
+ backend/services/detect_monophonic_instrument.py   |   26 [32m+[m[31m-[m
+ backend/services/detect_monophonic_yamnet.py       |    7 [32m+[m[31m-[m
+ backend/services/detect_type_crepe.py              |  103 [32m+[m[31m-[m
+ backend/services/detect_type_crnn.py               |   56 [32m+[m[31m-[m
+ backend/services/hybrid_detect_type.py             |   45 [32m+[m[31m-[m
+ backend/services/monophonic/direct_midi_export.py  |   51 [32m+[m
+ .../monophonic/mono_validation/convert_all_midi.py |   29 [32m+[m
+ backend/services/monophonic/note_based_tempo.py    |   87 [32m+[m[31m-[m
+ backend/services/monophonic/note_naming.py         |   55 [32m+[m[31m-[m
+ backend/services/monophonic/note_quantization.py   |   93 [32m+[m[31m-[m
+ backend/services/monophonic/note_segmentation.py   |   56 [32m+[m[31m-[m
+ backend/services/monophonic/note_to_midi.py        |   38 [32m+[m
+ backend/services/monophonic/pitch_extraction.py    |   26 [32m+[m[31m-[m
+ .../monophonic/preprocess_monophonic_audio.py      |   10 [32m+[m[31m-[m
+ backend/services/monophonic/sargam_converter.py    |  172 [32m+[m
+ backend/services/monophonic/tempo_selector.py      |   76 [32m+[m[31m-[m
+ .../validation/test_monophonic_validation.py       |  111 [32m+[m
+ .../monophonic/western_notation/ties_rests.py      |  185 [32m+[m[31m-[m
+ backend/services/polyphonic/apply_key_signature.py |   27 [32m+[m[31m-[m
+ backend/services/polyphonic/apply_tempo.py         |   18 [32m+[m[31m-[m
+ .../services/polyphonic/apply_time_signature.py    |    4 [32m+[m[31m-[m
+ backend/services/polyphonic/beat_tracking.py       |    9 [32m+[m[31m-[m
+ backend/services/polyphonic/export_musicxml.py     |    5 [32m+[m[31m-[m
+ backend/services/polyphonic/key_detection.py       |    5 [32m+[m[31m-[m
+ backend/services/polyphonic/merge_midi.py          |   10 [32m+[m[31m-[m
+ backend/services/polyphonic/midi_note_filter.py    |    2 [32m+[m[31m-[m
+ .../polyphonic/note_duration_normalizer.py         |   10 [32m+[m[31m-[m
+ backend/services/polyphonic/quantize_midi.py       |   23 [32m+[m[31m-[m
+ backend/services/polyphonic/separate_demucs.py     |   33 [32m+[m[31m-[m
+ backend/services/polyphonic/time_signature.py      |   13 [32m+[m[31m-[m
+ backend/services/polyphonic/transcribe_audio.py    |    6 [32m+[m[31m-[m
+ .../services/polyphonic/transcribe_basic_pitch.py  |   27 [32m+[m[31m-[m
+ backend/services/polyphonic/transcribe_drums.py    |   11 [32m+[m[31m-[m
+ backend/services/preprocess_stereo_audio.py        |    9 [32m+[m[31m-[m
+ backend/test_mon_xml.py                            |  111 [32m+[m
+ flute_keyboard_guitar_sequential.musicxml          |  118 [31m-[m
+ frontend/assets/images/1.jpg                       |  Bin [31m9115048[m -> [32m0[m bytes
+ frontend/assets/images/101.jpg                     |  Bin [31m5684429[m -> [32m0[m bytes
+ frontend/assets/images/102.png                     |  Bin [31m1225609[m -> [32m0[m bytes
+ frontend/assets/images/13.jpg                      |  Bin [31m2059511[m -> [32m0[m bytes
+ frontend/assets/images/14.jpg                      |  Bin [31m694410[m -> [32m0[m bytes
+ frontend/assets/images/2.jpg                       |  Bin [31m9536386[m -> [32m0[m bytes
+ frontend/assets/images/3.jpg                       |  Bin [31m5577815[m -> [32m0[m bytes
+ frontend/assets/images/4.jpg                       |  Bin [31m9431673[m -> [32m0[m bytes
+ frontend/assets/images/451.jpg                     |  Bin [31m315247[m -> [32m0[m bytes
+ frontend/assets/images/guitar.jpg                  |  Bin [31m61188[m -> [32m0[m bytes
+ frontend/assets/images/guitar1.jpg                 |  Bin [31m14261015[m -> [32m0[m bytes
+ frontend/assets/images/{100.jpg => landing.jpg}    |  Bin
+ frontend/assets/images/man.png                     |  Bin [31m103131[m -> [32m0[m bytes
+ frontend/assets/videos/blacknotes.mp4              |  Bin [31m3983604[m -> [32m0[m bytes
+ frontend/assets/videos/greennotes.mp4              |  Bin [31m4927884[m -> [32m0[m bytes
+ frontend/assets/videos/greenshort.mp4              |  Bin [31m1863765[m -> [32m0[m bytes
+ frontend/assets/videos/organplaying.mp4            |  Bin [31m11281785[m -> [32m0[m bytes
+ frontend/assets/videos/playnotes.mp4               |  Bin [31m3949023[m -> [32m0[m bytes
+ frontend/assets/videos/sheet.mp4                   |  Bin [31m1469083[m -> [32m0[m bytes
+ frontend/css/index.css                             |  407 [32m++[m
+ frontend/css/landing.css                           |  314 [32m+[m
+ frontend/css/monophonic.css                        |  296 [32m+[m
+ frontend/css/pitch_analysis.css                    |  167 [32m+[m
+ frontend/css/polyphonic.css                        |  438 [32m++[m
+ frontend/index.html                                |  708 [32m+[m[31m-[m
+ frontend/js/index.js                               |  246 [32m+[m
+ frontend/js/landing.js                             |   57 [32m+[m
+ frontend/js/monophonic.js                          |  362 [32m+[m
+ frontend/js/pitch_analysis.js                      |  271 [32m+[m
+ frontend/js/polyphonic.js                          | 1092 [32m+++[m
+ frontend/landing.html                              |  389 [32m+[m[31m-[m
+ frontend/landing.js                                |   12 [31m-[m
+ frontend/monophonic.html                           |  963 [32m+[m[31m--[m
+ frontend/monophonic.js                             |   51 [31m-[m
+ frontend/pitch_analysis.html                       |  448 [32m+[m[31m-[m
+ frontend/polyphonic.html                           | 1553 [32m+[m[31m---[m
+ frontend/polyphonic.js                             |  130 [31m-[m
+ mono6o.musicxml                                    |  399 [31m-[m
+ mono8sheet.musicxml                                |  629 [31m--[m
+ mono_poly_crnn.pth                                 |  Bin [31m6776721[m -> [32m0[m bytes
+ monoflutensyth.mid                                 |  Bin [31m66[m -> [32m0[m bytes
+ nokia.mid                                          |  Bin [31m113[m -> [32m0[m bytes
+ requirements_saru.txt => requirements.txt          |  Bin
+ scripts/{ => testing_scripts}/check.py             |    0
+ .../testing_scripts/check_logmel_shape.py          |    0
+ .../testing_scripts/checklist.py                   |    0
+ .../testing_scripts/checklist2.py                  |    0
+ .../testing_scripts/checklist3.py                  |    0
+ .../testing_scripts/checklist4.py                  |    0
+ .../testing_scripts/convert_gt_xml.py              |    0
+ .../create_nsynth_mono_with_mir1k.py               |    0
+ .../testing_scripts/create_real_poly_dataset.py    |    0
+ .../testing_scripts/detect_piano_only.py           |    0
+ .../{ => testing_scripts}/download_crepe_small.py  |    0
+ scripts/{ => testing_scripts}/download_yamnet.py   |    0
+ .../testing_scripts/extract_logmel_features.py     |    0
+ .../testing_scripts/nsynth_sequential_create.py    |    0
+ .../testing_scripts/piano_test.py                  |    0
+ .../testing_scripts/run_validate_pitch.py          |    0
+ .../testing_scripts/run_validate_preprocess.py     |    0
+ scripts/{ => testing_scripts}/test.py              |    0
+ .../testing_scripts/test_audio_midi_compare.py     |    0
+ .../testing_scripts/test_detect_key.py             |    0
+ .../testing_scripts/test_export_musicxml.py        |    0
+ .../testing_scripts/test_key_validation.py         |    0
+ .../testing_scripts/test_measure_grouping.py       |    0
+ .../testing_scripts/test_mono.py                   |    0
+ .../testing_scripts/test_mono_poly_crnn.py         |    0
+ .../testing_scripts/test_monophonic_pipeline.py    |    0
+ .../testing_scripts/test_musicxml.py               |    0
+ .../testing_scripts/test_musicxml_export.py        |    0
+ .../testing_scripts/test_note_naming.py            |    0
+ .../testing_scripts/test_pipeline.py               |    0
+ .../testing_scripts/test_poly_new_step1.py         |    0
+ .../testing_scripts/test_poly_step1-2.py           |    0
+ .../testing_scripts/test_poly_step1.py             |    0
+ .../testing_scripts/test_poly_step2.py             |    0
+ .../testing_scripts/test_quantize_notes.py         |    0
+ .../testing_scripts/test_score_integrity.py        |    0
+ scripts/{ => testing_scripts}/test_separation.py   |    0
+ .../testing_scripts/test_structural_validation.py  |    0
+ .../testing_scripts/test_ties_rests.py             |    0
+ .../testing_scripts/test_time_signature.py         |    0
+ .../testing_scripts/test_validate_notes.py         |    0
+ .../testing_scripts/test_validate_tempo.py         |    0
+ .../testing_scripts/test_xml_to_midi.py            |    0
+ scripts/{ => testing_scripts}/test_yamnet.py       |    0
+ .../testing_scripts/untitled10.py                  |    0
+ .../testing_scripts/validate_musicxml_midi.py      |    0
+ songs/desktop.ini                                  |    2 [31m-[m
+ test_output.musicxml                               |   67 [31m-[m
+ validation/Essen Folksong Database/appenzel.mid    |  Bin [31m0[m -> [32m1345[m bytes
+ validation/Essen Folksong Database/arabic01.mid    |  Bin [31m0[m -> [32m1307[m bytes
+ validation/Essen Folksong Database/ashsham1.mid    |  Bin [31m0[m -> [32m2263[m bytes
+ validation/Essen Folksong Database/belgium1.mid    |  Bin [31m0[m -> [32m551[m bytes
+ validation/Essen Folksong Database/brabant1.mid    |  Bin [31m0[m -> [32m300[m bytes
+ validation/Essen Folksong Database/brasil01.mid    |  Bin [31m0[m -> [32m236[m bytes
+ validation/Essen Folksong Database/canada01.mid    |  Bin [31m0[m -> [32m391[m bytes
+ validation/Essen Folksong Database/china01.mid     |  Bin [31m0[m -> [32m3263[m bytes
+ validation/Essen Folksong Database/china02.mid     |  Bin [31m0[m -> [32m1982[m bytes
+ validation/Essen Folksong Database/china03.mid     |  Bin [31m0[m -> [32m329[m bytes
+ validation/Essen Folksong Database/china04.mid     |  Bin [31m0[m -> [32m800[m bytes
+ validation/Essen Folksong Database/china05.mid     |  Bin [31m0[m -> [32m344[m bytes
+ validation/Essen Folksong Database/china06.mid     |  Bin [31m0[m -> [32m1649[m bytes
+ validation/Essen Folksong Database/china07.mid     |  Bin [31m0[m -> [32m875[m bytes
+ validation/Essen Folksong Database/china08.mid     |  Bin [31m0[m -> [32m329[m bytes
+ validation/Essen Folksong Database/china09.mid     |  Bin [31m0[m -> [32m1649[m bytes
+ validation/Essen Folksong Database/china10.mid     |  Bin [31m0[m -> [32m329[m bytes
+ validation/Essen Folksong Database/czech01.mid     |  Bin [31m0[m -> [32m355[m bytes
+ validation/Essen Folksong Database/czech02.mid     |  Bin [31m0[m -> [32m318[m bytes
+ validation/Essen Folksong Database/czech03.mid     |  Bin [31m0[m -> [32m246[m bytes
+ validation/Essen Folksong Database/czech04.mid     |  Bin [31m0[m -> [32m319[m bytes
+ validation/Essen Folksong Database/czech05.mid     |  Bin [31m0[m -> [32m201[m bytes
+ validation/Essen Folksong Database/czech06.mid     |  Bin [31m0[m -> [32m362[m bytes
+ validation/Essen Folksong Database/czech07.mid     |  Bin [31m0[m -> [32m362[m bytes
+ validation/Essen Folksong Database/czech08.mid     |  Bin [31m0[m -> [32m317[m bytes
+ validation/Essen Folksong Database/czech09.mid     |  Bin [31m0[m -> [32m326[m bytes
+ validation/Essen Folksong Database/czech10.mid     |  Bin [31m0[m -> [32m345[m bytes
+ validation/Essen Folksong Database/czech11.mid     |  Bin [31m0[m -> [32m490[m bytes
+ validation/Essen Folksong Database/czech12.mid     |  Bin [31m0[m -> [32m291[m bytes
+ validation/Essen Folksong Database/czech13.mid     |  Bin [31m0[m -> [32m354[m bytes
+ validation/Essen Folksong Database/czech14.mid     |  Bin [31m0[m -> [32m236[m bytes
+ validation/Essen Folksong Database/czech15.mid     |  Bin [31m0[m -> [32m372[m bytes
+ validation/Essen Folksong Database/czech16.mid     |  Bin [31m0[m -> [32m362[m bytes
+ validation/Essen Folksong Database/czech17.mid     |  Bin [31m0[m -> [32m354[m bytes
+ validation/Essen Folksong Database/czech18.mid     |  Bin [31m0[m -> [32m417[m bytes
+ validation/Essen Folksong Database/czech19.mid     |  Bin [31m0[m -> [32m263[m bytes
+ validation/Essen Folksong Database/czech20.mid     |  Bin [31m0[m -> [32m317[m bytes
+ validation/Essen Folksong Database/czech21.mid     |  Bin [31m0[m -> [32m371[m bytes
+ validation/Essen Folksong Database/czech22.mid     |  Bin [31m0[m -> [32m374[m bytes
+ validation/Essen Folksong Database/czech23.mid     |  Bin [31m0[m -> [32m380[m bytes
+ validation/Essen Folksong Database/czech24.mid     |  Bin [31m0[m -> [32m446[m bytes
+ validation/Essen Folksong Database/czech25.mid     |  Bin [31m0[m -> [32m281[m bytes
+ validation/Essen Folksong Database/czech26.mid     |  Bin [31m0[m -> [32m300[m bytes
+ validation/Essen Folksong Database/czech27.mid     |  Bin [31m0[m -> [32m227[m bytes
+ validation/Essen Folksong Database/czech28.mid     |  Bin [31m0[m -> [32m472[m bytes
+ validation/Essen Folksong Database/czech29.mid     |  Bin [31m0[m -> [32m346[m bytes
+ validation/Essen Folksong Database/czech30.mid     |  Bin [31m0[m -> [32m227[m bytes
+ validation/Essen Folksong Database/czech31.mid     |  Bin [31m0[m -> [32m335[m bytes
+ validation/Essen Folksong Database/czech32.mid     |  Bin [31m0[m -> [32m436[m bytes
+ validation/Essen Folksong Database/czech33.mid     |  Bin [31m0[m -> [32m363[m bytes
+ .../evaluation_results_direct.csv                  |   16 [32m+[m
+ .../generated_midis/brabant1.mid                   |  Bin [31m0[m -> [32m175[m bytes
+ .../generated_midis/china03.mid                    |  Bin [31m0[m -> [32m193[m bytes
+ .../generated_midis/china08.mid                    |  Bin [31m0[m -> [32m173[m bytes
+ .../generated_midis/china10.mid                    |  Bin [31m0[m -> [32m173[m bytes
+ .../generated_midis/czech01.mid                    |  Bin [31m0[m -> [32m172[m bytes
+ .../generated_midis/czech04.mid                    |  Bin [31m0[m -> [32m179[m bytes
+ .../generated_midis/czech05.mid                    |  Bin [31m0[m -> [32m152[m bytes
+ .../generated_midis/czech08.mid                    |  Bin [31m0[m -> [32m180[m bytes
+ .../generated_midis/czech13.mid                    |  Bin [31m0[m -> [32m220[m bytes
+ .../generated_midis/czech15.mid                    |  Bin [31m0[m -> [32m200[m bytes
+ .../generated_midis/czech16.mid                    |  Bin [31m0[m -> [32m251[m bytes
+ .../generated_midis/czech20.mid                    |  Bin [31m0[m -> [32m160[m bytes
+ .../generated_midis/czech24.mid                    |  Bin [31m0[m -> [32m230[m bytes
+ .../generated_midis/czech26.mid                    |  Bin [31m0[m -> [32m184[m bytes
+ .../generated_midis/czech30.mid                    |  Bin [31m0[m -> [32m169[m bytes
+ validation/FluidR3_GM.sf2                          |  Bin [31m0[m -> [32m148398306[m bytes
+ validation/MonoPoly_Classifer.ipynb                | 1029 [32m+++[m
+ ...D--AUDIO-split_07-06-17_Piano-e_1-01_wav--1.mid |  Bin
+ ...essed_Chamber1_MID--AUDIO_07_R3_2018_wav--2.mid |  Bin
+ ...1-1-8_mid--AUDIO-from_mp3_02_R1_2015_wav--4.mid |  Bin
+ ...it_07-06-17_Piano-e_1-01_wav--1_basic_pitch.mid |  Bin
+ ...r1_MID--AUDIO_07_R3_2018_wav--2_basic_pitch.mid |  Bin
+ ...UDIO-from_mp3_02_R1_2015_wav--4_basic_pitch.mid |  Bin
+ .../01_midi_precision_recall_f1.png                |  Bin
+ .../02_xml_precision_recall_f1.png                 |  Bin
+ .../03_offset_velocity_accuracy.png                |  Bin
+ .../evaluation_plots/04_midi_vs_xml_f1.png         |  Bin
+ .../evaluation_plots/05_summary_boxplots.png       |  Bin
+ .../evaluation_plots/06_score_heatmap.png          |  Bin
+ .../evaluation_plots/07_average_summary.png        |  Bin
+ .../evaluation_plots/08_xml_structure.png          |  Bin
+ .../evaluation_plots/09_scatter_midi_vs_xml_f1.png |  Bin
+ .../New folder/evaluation_results.csv              |    0
+ ...-UNPROCESSED_11-13_R1_2014_MID--AUDI_onsets.mid |  Bin
+ .../ground_truth.mid                               |  Bin
+ .../normalized.mid                                 |  Bin
+ .../predicted.musicxml                             |    0
+ .../quantized.mid                                  |  Bin
+ .../with_key.mid                                   |  Bin
+ .../with_tempo.mid                                 |  Bin
+ .../with_time.mid                                  |  Bin
+ ...-UNPROCESSED_16-18_R1_2014_MID--AUDI_onsets.mid |  Bin
+ .../ground_truth.mid                               |  Bin
+ .../normalized.mid                                 |  Bin
+ .../predicted.musicxml                             |    0
+ .../quantized.mid                                  |  Bin
+ .../with_key.mid                                   |  Bin
+ .../with_tempo.mid                                 |  Bin
+ .../with_time.mid                                  |  Bin
+ ...-UNPROCESSED_19-21_R3_2014_MID--AUDI_onsets.mid |  Bin
+ .../ground_truth.mid                               |  Bin
+ .../normalized.mid                                 |  Bin
+ .../predicted.musicxml                             |    0
+ .../quantized.mid                                  |  Bin
+ .../with_key.mid                                   |  Bin
+ .../with_tempo.mid                                 |  Bin
+ .../with_time.mid                                  |  Bin
+ ...-UNPROCESSED_21-22_R1_2014_MID--AUDI_onsets.mid |  Bin
+ .../ground_truth.mid                               |  Bin
+ .../normalized.mid                                 |  Bin
+ .../predicted.musicxml                             |    0
+ .../quantized.mid                                  |  Bin
+ .../with_key.mid                                   |  Bin
+ .../with_tempo.mid                                 |  Bin
+ .../with_time.mid                                  |  Bin
+ ...-UNPROCESSED_21-22_R1_2014_MID--AUDI_onsets.mid |  Bin
+ .../ground_truth.mid                               |  Bin
+ .../normalized.mid                                 |  Bin
+ .../predicted.musicxml                             |    0
+ .../quantized.mid                                  |  Bin
+ .../with_key.mid                                   |  Bin
+ .../with_tempo.mid                                 |  Bin
+ .../with_time.mid                                  |  Bin
+ ...-UNPROCESSED_21-22_R1_2014_MID--AUDI_onsets.mid |  Bin
+ .../ground_truth.mid                               |  Bin
+ .../normalized.mid                                 |  Bin
+ .../predicted.musicxml                             |    0
+ .../quantized.mid                                  |  Bin
+ .../with_key.mid                                   |  Bin
+ .../with_tempo.mid                                 |  Bin
+ .../with_time.mid                                  |  Bin
+ ...-Unprocessed_01_R1_2009_01-04_ORIG_M_onsets.mid |  Bin
+ .../ground_truth.mid                               |  Bin
+ .../normalized.mid                                 |  Bin
+ .../predicted.musicxml                             |    0
+ .../quantized.mid                                  |  Bin
+ .../with_key.mid                                   |  Bin
+ .../with_tempo.mid                                 |  Bin
+ .../with_time.mid                                  |  Bin
+ ...-Unprocessed_01_R1_2011_MID--AUDIO_R_onsets.mid |  Bin
+ .../ground_truth.mid                               |  Bin
+ .../normalized.mid                                 |  Bin
+ .../predicted.musicxml                             |    0
+ .../quantized.mid                                  |  Bin
+ .../with_key.mid                                   |  Bin
+ .../with_tempo.mid                                 |  Bin
+ .../with_time.mid                                  |  Bin
+ ...-Unprocessed_02_R1_2008_01-05_ORIG_M_onsets.mid |  Bin
+ .../ground_truth.mid                               |  Bin
+ .../normalized.mid                                 |  Bin
+ .../predicted.musicxml                             |    0
+ .../quantized.mid                                  |  Bin
+ .../with_key.mid                                   |  Bin
+ .../with_tempo.mid                                 |  Bin
+ .../with_time.mid                                  |  Bin
+ ...-Unprocessed_03_R1_2011_MID--AUDIO_R_onsets.mid |  Bin
+ .../ground_truth.mid                               |  Bin
+ .../normalized.mid                                 |  Bin
+ .../predicted.musicxml                             |    0
+ .../quantized.mid                                  |  Bin
+ .../with_key.mid                                   |  Bin
+ .../with_tempo.mid                                 |  Bin
+ .../with_time.mid                                  |  Bin
+ ...-Unprocessed_03_R2_2011_MID--AUDIO_R_onsets.mid |  Bin
+ .../ground_truth.mid                               |  Bin
+ .../normalized.mid                                 |  Bin
+ .../predicted.musicxml                             |    0
+ .../quantized.mid                                  |  Bin
+ .../with_key.mid                                   |  Bin
+ .../with_tempo.mid                                 |  Bin
+ .../with_time.mid         

@@ -7,10 +7,7 @@ import pretty_midi
 
 
 def midi_to_musicxml(midi_path: str, output_xml_path: str, bpm: float = 120):
-    """
-    Export MIDI to MusicXML without losing notes.
-    Uses multiple fallback strategies to ensure all notes are preserved.
-    """
+   
     print("\n[XML] ===== Exporting MusicXML =====")
 
     midi_path      = Path(midi_path)

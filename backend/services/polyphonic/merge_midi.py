@@ -4,17 +4,15 @@ from pathlib import Path
 import pretty_midi
 
 def merge_midi_tracks(midi_files: dict, output_path: str):
-    """
-    Merge pre-quantized MIDI tracks into one multi-track MIDI.
-    """
+    
     print("\n[MERGE] ===== Merging Quantized MIDI Tracks =====")
 
     merged_midi = pretty_midi.PrettyMIDI()
 
     instrument_map = {
-        "vocals": 53,   # Choir Aahs
-        "bass": 33,     # Electric Bass
-        "other": 0,     # Piano
+        "vocals": 53,   
+        "bass": 33,     
+        "other": 0,     
     }
 
     for name, midi_path in midi_files.items():

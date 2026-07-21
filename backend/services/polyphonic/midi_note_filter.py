@@ -4,7 +4,7 @@ import pretty_midi
 
 
 MIN_VELOCITY = 20
-MIN_DURATION = 0.12   # seconds
+MIN_DURATION = 0.12   
 MAX_DURATION = 3.0
 
 

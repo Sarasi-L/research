@@ -2,248 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>NoteScribe — Monophonic Analysis</title>
+  <title>NoteFusion — Monophonic Analysis</title>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@1.8.9/build/opensheetmusicdisplay.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <style>
-    :root {
-      --bg:      #020221;
-      --bg2:     #07072e;
-      --surface: #07072e;
-      --surface2:#0d0d3a;
-      --surface3:#111840;
-      --blue:    #0096FF;
-      --blue2:   #38b6ff;
-      --bluedim: rgba(0,150,255,0.10);
-      --cyan:    #2dd4bf;
-      --green:   #22c55e;
-      --amber:   #f59e0b;
-      --purple:  #818cf8;
-      --pink:    #ec4899;
-      --red:     #ef4444;
-      --orange:  #fb923c;
-      --white:   #ffffff;
-      --muted:   rgba(255,255,255,0.42);
-      --muted2:  rgba(255,255,255,0.22);
-      --border:  rgba(0,150,255,0.12);
-      --border2: rgba(0,150,255,0.28);
-      --glow:    rgba(0,150,255,0.08);
-      --glow2:   rgba(0,150,255,0.16);
-      --mono:    'JetBrains Mono', monospace;
-      --sans:    'Outfit', sans-serif;
-    }
-    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-    html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);color:var(--white);font-family:var(--sans);font-size:13px;}
-    ::-webkit-scrollbar{width:4px;height:4px;}
-    ::-webkit-scrollbar-track{background:transparent;}
-    ::-webkit-scrollbar-thumb{background:rgba(0,150,255,.22);border-radius:2px;}
-
-    /* ─── TITLEBAR ─── */
-    .titlebar{height:36px;background:rgba(2,2,33,.98);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;padding:0 16px;flex-shrink:0;position:relative;z-index:200;}
-    .tb-dots{display:flex;gap:6px;margin-right:16px;}
-    .tb-dot{width:10px;height:10px;border-radius:50%;}
-    .tb-dot.close{background:#ef4444;}
-    .tb-dot.min{background:#f59e0b;}
-    .tb-dot.max{background:#22c55e;}
-    .tb-title{font-family:var(--mono);font-size:11px;color:var(--muted);}
-    .tb-center{position:absolute;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:var(--muted2);}
-    .tb-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
-    .tb-badge{font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:3px;background:var(--bluedim);border:1px solid var(--border2);color:var(--blue2);}
-
-    /* ─── MENUBAR ─── */
-    .menubar{height:32px;background:rgba(7,7,46,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:2px;flex-shrink:0;}
-    .menu-item{padding:4px 12px;font-size:12px;color:var(--muted);cursor:pointer;border-radius:4px;transition:all .15s;}
-    .menu-item:hover{background:var(--glow);color:var(--white);}
-    .menu-sep{width:1px;height:16px;background:var(--border);margin:0 4px;}
-
-    /* ─── NAV TABS ─── */
-    .navtabs{height:42px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:stretch;padding:0 0 0 16px;flex-shrink:0;}
-    .nav-tab{display:flex;align-items:center;gap:7px;padding:0 18px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;text-decoration:none;white-space:nowrap;}
-    .nav-tab:hover{color:var(--white);}
-    .nav-tab.active{color:var(--white);border-bottom-color:var(--blue);}
-    .nav-tab.locked{pointer-events:none;opacity:.35;}
-    .nav-tab .nt-num{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;background:var(--glow);border:1px solid var(--border2);color:var(--blue2);}
-    .nav-tab.active .nt-num{background:var(--glow2);}
-    .nav-right{margin-left:auto;display:flex;align-items:center;gap:10px;padding-right:16px;}
-    .status-pill{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--muted);padding:3px 10px;border-radius:20px;border:1px solid var(--border);}
-    .status-dot{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s ease-in-out infinite;}
-    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-
-    /* ─── SHELL ─── */
-    .shell{display:grid;grid-template-columns:240px 1fr;height:calc(100vh - 42px);}
-
-    /* ─── SIDEBAR ─── */
-    .sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
-    .sb-top{padding:14px 14px 0;flex-shrink:0;}
-    .sb-label{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-    .file-card{background:var(--glow);border:1px solid var(--border2);border-radius:7px;padding:10px 12px;margin-bottom:10px;}
-    .fc-name{font-size:11.5px;font-weight:700;color:var(--white);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-    .fc-badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;background:var(--bluedim);border:1px solid var(--border2);color:var(--blue2);}
-
-    .run-btn{width:100%;padding:10px;background:var(--blue);color:#fff;font-family:var(--sans);font-weight:700;font-size:11.5px;letter-spacing:.8px;text-transform:uppercase;border:none;border-radius:7px;cursor:pointer;transition:all .2s;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:7px;}
-    .run-btn:hover:not(:disabled){background:#0077cc;box-shadow:0 0 20px rgba(0,150,255,.45);}
-    .run-btn:disabled{opacity:.35;cursor:not-allowed;}
-
-    .sb-scroll{flex:1;overflow-y:auto;padding:0 14px 14px;}
-
-    /* Step list */
-    .step-list{display:flex;flex-direction:column;gap:3px;}
-    .step-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:5px;border:1px solid transparent;transition:all .25s;font-size:11px;color:var(--muted);}
-    .step-item.active{background:var(--glow);border-color:var(--border);color:var(--white);}
-    .step-item.done{color:rgba(34,197,94,.9);}
-    .step-dot{width:17px;height:17px;border-radius:50%;border:1.5px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8px;color:var(--muted);}
-    .step-item.active .step-dot{border-color:var(--blue);color:var(--blue);}
-    .step-item.done .step-dot{border-color:var(--green);color:var(--green);background:rgba(34,197,94,.08);}
-    .step-spin{width:13px;height:13px;border-radius:50%;border:2px solid var(--border2);border-top-color:var(--blue);animation:spin 1s linear infinite;display:none;flex-shrink:0;}
-    .step-item.active .step-spin{display:block;}
-    .step-item.active .step-dot{display:none;}
-    @keyframes spin{to{transform:rotate(360deg)}}
-
-    /* Results summary */
-    .sb-results{display:none;flex-direction:column;gap:6px;padding-top:12px;}
-    .sb-sep{height:1px;background:var(--border);margin:4px 0;}
-    .sr-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
-    .sr-label{font-size:11px;color:var(--muted);}
-    .sr-val{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--white);}
-    .sr-val.blue{color:var(--blue2);}
-    .sr-val.green{color:var(--green);}
-
-    /* ─── MAIN ─── */
-    .main{background:var(--bg);display:flex;flex-direction:column;height:100%;overflow:hidden;}
-
-    /* Inner tabs */
-    .inner-tabs{display:flex;gap:0;padding:0 0 0 16px;border-bottom:1px solid var(--border);background:rgba(7,7,46,.4);flex-shrink:0;}
-    .inner-tab{padding:10px 16px;font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;display:flex;align-items:center;gap:6px;}
-    .inner-tab:hover{color:var(--white);}
-    .inner-tab.active{color:var(--white);border-bottom-color:var(--blue);}
-    .it-dot{width:5px;height:5px;border-radius:50%;background:var(--green);display:none;}
-    .inner-tab.has-data .it-dot{display:block;}
-    .tab-content{display:none;flex:1;overflow-y:auto;flex-direction:column;}
-    .tab-content.active{display:flex;}
-
-    /* ─── IDLE / LOADING ─── */
-    .idle-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:40px;}
-    .idle-icon{font-size:40px;opacity:.2;margin-bottom:4px;}
-    .idle-title{font-size:14px;font-weight:700;color:rgba(255,255,255,.3);}
-    .idle-sub{font-size:11.5px;color:rgba(255,255,255,.18);max-width:300px;line-height:1.7;}
-
-    .loading-state{display:none;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:14px;text-align:center;padding:40px;}
-    .spin-lg{width:48px;height:48px;border-radius:50%;border:3px solid var(--border2);border-top-color:var(--blue);animation:spin 1s linear infinite;}
-    .loading-title{font-size:14px;font-weight:700;color:var(--muted2);}
-    .loading-step{font-family:var(--mono);font-size:11px;color:var(--blue2);}
-    .loading-bars{display:flex;align-items:center;gap:3px;height:28px;}
-    .lb{width:3px;border-radius:2px;background:var(--blue);animation:lwave 1s ease-in-out infinite;}
-    .lb:nth-child(1){height:8px;animation-delay:0s}.lb:nth-child(2){height:14px;animation-delay:.1s}.lb:nth-child(3){height:22px;animation-delay:.2s}.lb:nth-child(4){height:14px;animation-delay:.3s}.lb:nth-child(5){height:8px;animation-delay:.4s}
-    @keyframes lwave{0%,100%{transform:scaleY(.3);opacity:.4}50%{transform:scaleY(1);opacity:1}}
-
-    /* ─── OVERVIEW TAB ─── */
-    .overview-body{padding:16px 20px;display:flex;flex-direction:column;gap:14px;flex:1;}
-
-    /* Metric strip */
-    .metric-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;flex-shrink:0;}
-    .metric-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;transition:all .2s;}
-    .metric-card:hover{border-color:var(--border2);}
-    .mc-label{font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
-    .mc-value{font-size:22px;font-weight:800;color:var(--blue2);line-height:1;margin-bottom:2px;}
-    .mc-sub{font-size:10px;color:var(--muted);}
-    .mc-value.green{color:var(--green);}
-    .mc-value.amber{color:var(--amber);}
-    .mc-value.purple{color:var(--purple);}
-
-    /* Instrument highlight */
-    .instr-highlight{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:13px 16px;display:flex;align-items:center;gap:14px;flex-shrink:0;}
-    .ih-icon{width:40px;height:40px;border-radius:8px;background:var(--glow2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-    .ih-info{flex:1;}
-    .ih-name{font-size:18px;font-weight:800;color:var(--white);letter-spacing:.3px;text-transform:uppercase;line-height:1;margin-bottom:3px;}
-    .ih-meta{font-size:11px;color:var(--muted);}
-    .ih-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
-    .ih-conf{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--blue2);}
-    .ih-conf-bar{width:80px;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;}
-    .ih-conf-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--blue2));border-radius:2px;transition:width 1s ease;}
-
-    /* Music info panel */
-    .music-info-panel{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex-shrink:0;}
-    .mip-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
-    .mip-label{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
-    .mip-value{font-size:22px;font-weight:800;color:var(--white);line-height:1;margin-bottom:3px;}
-    .mip-sub{font-size:10px;color:var(--muted);margin-bottom:8px;}
-    .mip-detail{font-size:10.5px;color:rgba(255,255,255,.35);line-height:1.5;}
-
-    /* Notation card */
-    .notation-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;flex:1;display:flex;flex-direction:column;min-height:0;}
-    .nc-header{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border);flex-shrink:0;background:rgba(7,7,46,.4);}
-    .nc-title{font-size:12px;font-weight:700;color:var(--white);}
-    .nc-sub{font-size:10px;color:var(--muted);margin-top:1px;}
-    .nc-actions{display:flex;gap:6px;}
-    .btn-xs{padding:5px 12px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .15s;text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-family:var(--sans);border:none;}
-    .btn-primary{background:var(--blue);color:#fff;}
-    .btn-primary:hover{background:#0077cc;}
-    .btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
-    .btn-outline:hover{border-color:var(--border2);color:var(--white);}
-    .notation-wrapper{background:#ffffff;flex:1;overflow:auto;padding:20px 24px;min-height:0;}
-    #notationContainer{min-height:160px;}
-
-    /* ─── PITCH TAB ─── */
-    .pitch-body{padding:14px 18px;display:flex;flex-direction:column;gap:10px;flex:1;overflow:hidden;}
-
-    /* Info strip */
-    .info-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;flex-shrink:0;}
-    .info-box{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 12px;text-align:center;}
-    .ib-val{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--blue2);line-height:1;margin-bottom:3px;}
-    .ib-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;}
-
-    /* Two-column layout for pitch tab */
-    .pitch-main{display:grid;grid-template-columns:1fr 340px;gap:10px;flex:1;min-height:0;overflow:hidden;}
-
-    /* Piano Roll panel */
-    .roll-panel{background:var(--surface2);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;overflow:hidden;}
-    .roll-header{padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;}
-    .roll-title{font-size:12px;font-weight:700;color:var(--white);}
-    .roll-sub{font-size:10px;color:var(--muted);margin-top:1px;}
-    .roll-legend{display:flex;align-items:center;gap:12px;font-size:10px;color:var(--muted);}
-    .rl-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
-
-    /* Piano roll canvas wrapper */
-    .roll-scroll{flex:1;overflow:auto;position:relative;}
-    #rollCanvas{display:block;}
-
-    /* Note cards panel (right side) */
-    .notes-panel{background:var(--surface2);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;overflow:hidden;}
-    .np-header{padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;}
-    .np-title{font-size:12px;font-weight:700;color:var(--white);}
-    .np-meta{font-family:var(--mono);font-size:10px;color:var(--muted);}
-    .np-body{flex:1;overflow-y:auto;padding:8px;}
-
-    /* Note cards */
-    .note-card{
-      display:flex;align-items:center;gap:10px;
-      padding:7px 10px;border-radius:6px;
-      border:1px solid var(--border);background:var(--surface3);
-      margin-bottom:4px;cursor:default;transition:all .15s;
-    }
-    .note-card:hover{border-color:var(--border2);background:var(--glow);}
-    .note-card.is-rest{opacity:.55;}
-    .nc-pill{
-      width:38px;height:38px;border-radius:7px;flex-shrink:0;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      font-family:var(--mono);font-weight:800;font-size:13px;line-height:1;
-      border:1px solid transparent;
-    }
-    .nc-pill .nc-octave{font-size:9px;font-weight:600;opacity:.7;margin-top:1px;}
-    .nc-info{flex:1;min-width:0;}
-    .nc-label{font-size:11px;font-weight:600;color:var(--white);margin-bottom:3px;}
-    .nc-timing{font-family:var(--mono);font-size:9px;color:var(--muted);}
-    .nc-dur-wrap{width:100%;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin-top:4px;}
-    .nc-dur-bar{height:100%;border-radius:2px;}
-    .nc-dur-val{font-family:var(--mono);font-size:10px;color:var(--muted2);white-space:nowrap;flex-shrink:0;width:36px;text-align:right;}
-    .nc-seq{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.18);width:16px;flex-shrink:0;}
-  </style>
+  <link rel="stylesheet" href="css/monophonic.css">
 </head>
 <body>
-
-
 
 <!-- NAV TABS -->
 <div class="navtabs">
@@ -269,7 +35,7 @@
     </div>
 
     <div class="sb-scroll">
-      <div class="sb-label">Pipeline Steps</div>
+      <div class="sb-label">Analysis Steps</div>
       <div class="step-list">
         <div class="step-item" id="st1">
           <div class="step-dot">1</div><div class="step-spin"></div>
@@ -293,7 +59,7 @@
         </div>
         <div class="step-item" id="st6">
           <div class="step-dot">6</div><div class="step-spin"></div>
-          MusicXML Generation
+          Notation Generation
         </div>
       </div>
 
@@ -306,6 +72,15 @@
         <div class="sr-row"><span class="sr-label">Time Sig</span><span class="sr-val" id="srTime">—</span></div>
         <div class="sr-row"><span class="sr-label">Note Count</span><span class="sr-val green" id="srNotes">—</span></div>
       </div>
+
+      <!-- Copyright footer -->
+      <div class="sb-footer">
+        <div class="sb-copyright">
+          © 2025 <b>NoteFusion</b>. All Rights Reserved.<br>
+          Music Notation &amp; Analysis Suite
+        </div>
+      </div>
+
     </div>
   </aside>
 
@@ -320,95 +95,138 @@
       <div class="inner-tab" id="tabPi" onclick="switchTab('pitch')">
         <div class="it-dot"></div> Pitch Analysis
       </div>
+      <div class="inner-tab" id="tabSg" onclick="switchTab('sargam')">
+        <div class="it-dot"></div> Sargam Notation
+      </div>
     </div>
 
     <!-- ── OVERVIEW TAB ── -->
     <div class="tab-content active" id="tab-overview">
+
+      <!-- IDLE -->
       <div class="idle-state" id="idleState">
         <div class="idle-icon">🎵</div>
         <div class="idle-title">Analysis not started</div>
-        <div class="idle-sub">Click "Run Analysis" in the sidebar to begin. NoteScribe will detect instrument, track pitch, estimate tempo, identify the key, and generate Western notation.</div>
+        <div class="idle-sub">Click "Run Analysis" in the sidebar to begin. NoteFusion will detect instrument, track pitch, estimate tempo, identify the key, and generate Western notation.</div>
       </div>
+
+      <!-- LOADING -->
       <div class="loading-state" id="loadingState">
         <div class="spin-lg"></div>
         <div class="loading-title">Analyzing monophonic audio…</div>
-        <div class="loading-step" id="loadingStep">Initializing pipeline</div>
+        <div class="loading-step" id="loadingStep">Initializing…</div>
         <div class="loading-bars">
           <div class="lb"></div><div class="lb"></div><div class="lb"></div><div class="lb"></div><div class="lb"></div>
         </div>
       </div>
+
+      <!-- SPLIT RESULT LAYOUT -->
       <div class="overview-body" id="overviewBody" style="display:none;">
-        <!-- Instrument highlight -->
-        <div class="instr-highlight">
-          <div class="ih-icon" id="ihIcon">🎵</div>
-          <div class="ih-info">
-            <div class="ih-name" id="ihName">—</div>
-            <div class="ih-meta" id="ihMeta">Detected instrument · monophonic source</div>
-          </div>
-          <div class="ih-right">
-            <div class="ih-conf" id="ihConf">—</div>
-            <div class="ih-conf-bar"><div class="ih-conf-fill" id="ihFill" style="width:0%"></div></div>
-          </div>
-        </div>
-        <!-- Metrics -->
-        <div class="metric-strip">
-          <div class="metric-card">
-            <div class="mc-label">Tempo</div>
-            <div class="mc-value" id="mTempo">—</div>
-            <div class="mc-sub">BPM</div>
-          </div>
-          <div class="metric-card">
-            <div class="mc-label">Key Signature</div>
-            <div class="mc-value green" id="mKey">—</div>
-            <div class="mc-sub" id="mMode">—</div>
-          </div>
-          <div class="metric-card">
-            <div class="mc-label">Time Signature</div>
-            <div class="mc-value amber" id="mTime">—</div>
-            <div class="mc-sub">beats per measure</div>
-          </div>
-          <div class="metric-card">
-            <div class="mc-label">Total Notes</div>
-            <div class="mc-value purple" id="mNotes">—</div>
-            <div class="mc-sub">detected</div>
-          </div>
-          <div class="metric-card">
-            <div class="mc-label">Key Confidence</div>
-            <div class="mc-value" id="mKeyConf">—</div>
-            <div class="mc-sub">detection score</div>
-          </div>
-        </div>
-        <!-- Music info -->
-        <div class="music-info-panel">
-          <div class="mip-card">
-            <div class="mip-label">Tempo Analysis</div>
-            <div class="mip-value" id="mipTempo">—</div>
-            <div class="mip-sub">BPM · quarter note = beat</div>
-            <div class="mip-detail" id="mipTempoDetail">Tempo is measured in beats per minute (BPM). At this tempo, each quarter note lasts approximately <span id="mipBeatLen">—</span>ms. Common tempos: Largo (40–60), Andante (76–108), Allegro (120–156), Presto (168+).</div>
-          </div>
-          <div class="mip-card">
-            <div class="mip-label">Key &amp; Scale</div>
-            <div class="mip-value" id="mipKey">—</div>
-            <div class="mip-sub" id="mipKeyMode">—</div>
-            <div class="mip-detail">Key determined by pitch class histogram analysis. Western major scales follow the W-W-H-W-W-W-H pattern; minor scales use W-H-W-W-H-W-W.</div>
-          </div>
-        </div>
-        <!-- Notation -->
-        <div class="notation-card">
-          <div class="nc-header">
-            <div>
-              <div class="nc-title">Generated Western Notation</div>
-              <div class="nc-sub">MusicXML rendered via OpenSheetMusicDisplay · interactive view</div>
+
+        <!-- LEFT: vertical details panel -->
+        <div class="details-panel">
+
+          <!-- Instrument card -->
+          <div class="instr-card">
+            <div class="ic-top">
+              <div class="ic-icon" id="ihIcon">🎵</div>
+              <div>
+                <div class="ic-name" id="ihName">—</div>
+                <div class="ic-sub" id="ihMeta">Detected instrument · monophonic</div>
+              </div>
             </div>
-            <div class="nc-actions">
+            <div class="ic-conf-row">
+              <span class="ic-conf-label">Detection Confidence</span>
+              <span class="ic-conf-val" id="ihConf">—</span>
+            </div>
+            <div class="ic-conf-track">
+              <div class="ic-conf-fill" id="ihFill" style="width:0%"></div>
+            </div>
+          </div>
+
+          <div class="dp-section-label">Musical Properties</div>
+
+          <!-- Vertical metric list -->
+          <div class="metric-list">
+            <div class="ml-item blue">
+              <div class="ml-left">
+                <div class="ml-label">Tempo</div>
+                <div class="ml-value blue" id="mTempo">—</div>
+                <div class="ml-sub">beats per minute</div>
+              </div>
+              <div class="ml-icon">♩</div>
+            </div>
+            <div class="ml-item green">
+              <div class="ml-left">
+                <div class="ml-label">Key Signature</div>
+                <div class="ml-value green" id="mKey">—</div>
+                <div class="ml-sub" id="mMode">—</div>
+              </div>
+              <div class="ml-icon">🎼</div>
+            </div>
+            <div class="ml-item amber">
+              <div class="ml-left">
+                <div class="ml-label">Time Signature</div>
+                <div class="ml-value amber" id="mTime">—</div>
+                <div class="ml-sub">beats per measure</div>
+              </div>
+              <div class="ml-icon">𝄴</div>
+            </div>
+            <div class="ml-item purple">
+              <div class="ml-left">
+                <div class="ml-label">Total Notes</div>
+                <div class="ml-value purple" id="mNotes">—</div>
+                <div class="ml-sub">detected events</div>
+              </div>
+              <div class="ml-icon">🎵</div>
+            </div>
+            <div class="ml-item cyan">
+              <div class="ml-left">
+                <div class="ml-label">Key Confidence</div>
+                <div class="ml-value cyan" id="mKeyConf">—</div>
+                <div class="ml-sub">detection score</div>
+              </div>
+              <div class="ml-icon">✓</div>
+            </div>
+          </div>
+
+          <div class="dp-section-label">Details</div>
+
+          <!-- Description cards -->
+          <div class="detail-desc-card">
+            <div class="ddc-title">Tempo Analysis</div>
+            <div class="ddc-text" id="mipTempoDetail">
+              At this tempo, each beat lasts approximately <b id="mipBeatLen">—</b>ms.
+              Common references: <b>Largo</b> (40–60), <b>Andante</b> (76–108), <b>Allegro</b> (120–156), <b>Presto</b> (168+).
+            </div>
+          </div>
+
+          <div class="detail-desc-card">
+            <div class="ddc-title">Key &amp; Scale</div>
+            <div class="ddc-text">
+              The key is determined by analysing pitch patterns and matching them to standard major or minor scales. The tonic note acts as the musical centre of gravity throughout the piece.
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT: notation sheet panel -->
+        <div class="notation-panel">
+          <div class="np-header">
+            <div>
+              <div class="np-title">Generated Western Notation</div>
+              <div class="np-sub">Interactive sheet music · scroll to view full score</div>
+            </div>
+            <div class="np-actions">
               <button class="btn-xs btn-primary" id="dlPdfBtn">⬇ Download PDF</button>
               <button class="btn-xs btn-outline" onclick="switchTab('pitch')">Pitch Analysis →</button>
             </div>
           </div>
-          <div class="notation-wrapper">
+          <div class="notation-scroll">
             <div id="notationContainer">Notation renders after analysis…</div>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -420,11 +238,8 @@
         <div class="idle-sub">Run the analysis first to view the piano roll and note timeline.</div>
       </div>
       <div class="pitch-body" id="pitchBody" style="display:none;">
-        <!-- Stats strip -->
         <div class="info-strip" id="pitchInfoStrip"></div>
-        <!-- Main two-column -->
         <div class="pitch-main">
-          <!-- Piano Roll -->
           <div class="roll-panel">
             <div class="roll-header">
               <div>
@@ -437,10 +252,9 @@
               <canvas id="rollCanvas"></canvas>
             </div>
           </div>
-          <!-- Note Cards -->
           <div class="notes-panel">
-            <div class="np-header">
-              <div class="np-title">Note Events</div>
+            <div class="np-header2">
+              <div class="np-title2">Note Events</div>
               <div class="np-meta" id="noteCount">—</div>
             </div>
             <div class="np-body" id="noteCardsBody"></div>
@@ -449,522 +263,39 @@
       </div>
     </div>
 
+    <!-- ── SARGAM TAB ── -->
+    <div class="tab-content" id="tab-sargam">
+      <div class="sargam-scroll" id="sargamScroll">
+        <div class="empty-sargam" id="sargamIdle">
+          <div class="es-icon">🎶</div>
+          <div class="es-title">No Sargam generated yet</div>
+          <div class="es-sub">Run the analysis to render Sargam (Indian classical syllable) notation.</div>
+        </div>
+        <div id="sargamContent" style="display:none">
+          <div class="sargam-head">
+            <div>
+              <div class="sargam-hl-title">Sargam Notation — Indian Classical System</div>
+              <div class="sargam-hl-sub">Sa Re Ga Ma Pa Dha Ni · pitch syllables transcribed from detected frequencies</div>
+            </div>
+          </div>
+          <div class="sargam-stat-strip" id="sargamStats"></div>
+          <div class="sargam-card" id="sargamText"></div>
+          <div class="sargam-legend">
+            <div class="sl-item"><div class="sl-dot" style="background:#0096FF"></div> Sa — C (Root)</div>
+            <div class="sl-item"><div class="sl-dot" style="background:#2dd4bf"></div> Re — D</div>
+            <div class="sl-item"><div class="sl-dot" style="background:#818cf8"></div> Ga — E</div>
+            <div class="sl-item"><div class="sl-dot" style="background:#f59e0b"></div> Ma — F</div>
+            <div class="sl-item"><div class="sl-dot" style="background:#22c55e"></div> Pa — G</div>
+            <div class="sl-item"><div class="sl-dot" style="background:#ef4444"></div> Dha — A</div>
+            <div class="sl-item"><div class="sl-dot" style="background:#ec4899"></div> Ni — B</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
-<script>
-const urlParams = new URLSearchParams(window.location.search);
-const uploadedFileName = urlParams.get('file');
-let analysisResult = null;
-let currentXmlUrl = null;
-
-document.getElementById('sideFileName').textContent = uploadedFileName || 'No file';
-
-function switchTab(name) {
-  document.querySelectorAll('.inner-tab').forEach((t,i) => {
-    t.classList.toggle('active', ['overview','pitch'][i] === name);
-  });
-  document.querySelectorAll('.tab-content').forEach(c => {
-    c.classList.toggle('active', c.id === 'tab-' + name);
-  });
-}
-
-function setStep(n, state) {
-  const el = document.getElementById('st' + n);
-  el.classList.remove('active','done');
-  el.classList.add(state);
-}
-function setStepsUpTo(n) {
-  for (let i=1; i<=6; i++) {
-    if (i < n) setStep(i,'done');
-    else if (i === n) setStep(i,'active');
-    else { const el = document.getElementById('st'+i); el.classList.remove('active','done'); }
-  }
-}
-
-const loadingMessages = [
-  'Detecting instrument profile…',
-  'Extracting pitch contour via pYIN…',
-  'Segmenting note boundaries…',
-  'Estimating tempo and beat grid…',
-  'Detecting key signature…',
-  'Generating MusicXML notation…'
-];
-
-document.getElementById('analyzeBtn').onclick = async () => {
-  if (!uploadedFileName) { alert('No audio file specified!'); return; }
-  document.getElementById('idleState').style.display = 'none';
-  document.getElementById('loadingState').style.display = 'flex';
-  document.getElementById('overviewBody').style.display = 'none';
-  document.getElementById('analyzeBtn').disabled = true;
-
-  let stepIdx = 0;
-  const stepInterval = setInterval(() => {
-    if (stepIdx < 6) {
-      setStepsUpTo(stepIdx + 1);
-      document.getElementById('loadingStep').textContent = loadingMessages[stepIdx];
-      stepIdx++;
-    }
-  }, 600);
-
-  try {
-    const res = await fetch(`http://127.0.0.1:8000/analyze/monophonic/?filename=${uploadedFileName}`, { method: 'POST' });
-    if (!res.ok) throw new Error(await res.text());
-    const result = await res.json();
-    analysisResult = result;
-    localStorage.setItem('monophonicAnalysis', JSON.stringify(result));
-    clearInterval(stepInterval);
-    for (let i=1; i<=6; i++) setStep(i,'done');
-    setTimeout(() => renderResults(result), 400);
-  } catch(err) {
-    clearInterval(stepInterval);
-    console.error(err);
-    alert('Analysis failed: ' + err.message);
-    document.getElementById('loadingState').style.display = 'none';
-    document.getElementById('idleState').style.display = 'flex';
-    document.getElementById('analyzeBtn').disabled = false;
-  }
-};
-
-const iconMap = { piano:'🎹', guitar:'🎸', violin:'🎻', flute:'🪈', voice:'🎤', trumpet:'🎺', saxophone:'🎷', cello:'🎻', clarinet:'🪈', keyboard:'🎹' };
-
-function renderResults(result) {
-  document.getElementById('loadingState').style.display = 'none';
-  document.getElementById('overviewBody').style.display = 'flex';
-  document.getElementById('analyzeBtn').disabled = false;
-
-  const instr = result.instrument?.instrument || '—';
-  const instrConf = result.instrument?.confidence || 0;
-  const icon = iconMap[instr.toLowerCase()] || '🎵';
-  document.getElementById('ihIcon').textContent = icon;
-  document.getElementById('ihName').textContent = instr.toUpperCase();
-  document.getElementById('ihConf').textContent = (instrConf * 100).toFixed(1) + '%';
-  setTimeout(() => { document.getElementById('ihFill').style.width = (instrConf*100) + '%'; }, 200);
-
-  const tempo = result.tempo?.tempo || 0;
-  document.getElementById('mTempo').textContent = tempo.toFixed(0);
-  document.getElementById('mKey').textContent = result.key?.key || '—';
-  document.getElementById('mMode').textContent = result.key?.mode || '—';
-  document.getElementById('mTime').textContent = result.beats_per_measure + '/4';
-  const noteCount = (result.note_segments || []).filter(n=>!n.is_rest).length;
-  document.getElementById('mNotes').textContent = noteCount;
-  document.getElementById('mKeyConf').textContent = result.key?.confidence ? (result.key.confidence * 100).toFixed(0) + '%' : '—';
-
-  const beatMs = tempo > 0 ? (60000 / tempo).toFixed(0) : '—';
-  document.getElementById('mipTempo').textContent = tempo.toFixed(0);
-  document.getElementById('mipBeatLen').textContent = beatMs;
-  document.getElementById('mipKey').textContent = result.key?.key || '—';
-  document.getElementById('mipKeyMode').textContent = (result.key?.mode || '') + ' scale';
-
-  // Sidebar summary
-  document.getElementById('sbResults').style.display = 'flex';
-  document.getElementById('srInstr').textContent = instr.toUpperCase();
-  document.getElementById('srKey').textContent = (result.key?.key || '—') + ' ' + (result.key?.mode || '');
-  document.getElementById('srTempo').textContent = tempo.toFixed(0) + ' BPM';
-  document.getElementById('srTime').textContent = result.beats_per_measure + '/4';
-  document.getElementById('srNotes').textContent = (result.note_segments || []).length;
-
-  // Mark tabs as having data
-  document.getElementById('tabOv').classList.add('has-data');
-  document.getElementById('tabPi').classList.add('has-data');
-
-  // MusicXML
-  currentXmlUrl = 'http://127.0.0.1:8000' + result.musicxml_file;
-  renderMusicXML(currentXmlUrl);
-
-  buildPitchTab(result);
-}
-
-async function renderMusicXML(url) {
-  const container = document.getElementById('notationContainer');
-  container.innerHTML = '<span style="color:#666;font-size:12px;">Rendering notation…</span>';
-  const osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(container, {
-    drawingParameters: 'compact', autoResize: true,
-    drawTitle: true, drawMeasureNumbers: true, drawPartNames: false
-  });
-  try {
-    await osmd.load(url);
-    osmd.render();
-  } catch(err) {
-    container.innerHTML = '<span style="color:#f44;font-size:12px;">Notation unavailable. Check server connection.</span>';
-    console.error(err);
-  }
-}
-
-// ── PDF DOWNLOAD ──
-document.getElementById('dlPdfBtn').onclick = async () => {
-  const btn = document.getElementById('dlPdfBtn');
-  const container = document.getElementById('notationContainer');
-  const svgs = container.querySelectorAll('svg');
-
-  if (!svgs.length) {
-    alert('Notation not yet rendered. Please wait for analysis to complete.');
-    return;
-  }
-
-  btn.textContent = '⏳ Generating…';
-  btn.disabled = true;
-
-  try {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-    const pageW   = 210;
-    const pageH   = 297;
-    const margin  = 12;
-    const usableW = pageW - margin * 2;
-
-    let yOffset   = margin;
-    let firstPage = true;
-
-    // Title header on first page
-    const filename = (document.getElementById('sideFileName').textContent || 'score').replace(/\.[^.]+$/, '');
-    const key      = document.getElementById('mKey').textContent;
-    const tempo    = document.getElementById('mTempo').textContent;
-    const instr    = document.getElementById('ihName').textContent;
-
-    pdf.setFontSize(14);
-    pdf.setTextColor(20, 20, 20);
-    pdf.text(filename + ' — Sheet Music', margin, yOffset);
-    yOffset += 7;
-
-    pdf.setFontSize(9);
-    pdf.setTextColor(100, 100, 100);
-    pdf.text(`Instrument: ${instr}   Key: ${key}   Tempo: ${tempo} BPM`, margin, yOffset);
-    yOffset += 8;
-
-    // Render each SVG with strip-slicing
-    for (let i = 0; i < svgs.length; i++) {
-      const svg = svgs[i];
-
-      // Get SVG dimensions
-      let svgW, svgH;
-      const vb = svg.getAttribute('viewBox');
-      if (vb) {
-        const parts = vb.split(/[\s,]+/);
-        svgW = parseFloat(parts[2]);
-        svgH = parseFloat(parts[3]);
-      } else {
-        const bb = svg.getBoundingClientRect();
-        svgW = bb.width  || svg.width?.baseVal?.value  || 800;
-        svgH = bb.height || svg.height?.baseVal?.value || 400;
-      }
-      if (!svgW || !svgH) continue;
-
-      // Clone and serialize SVG
-      const cloned = svg.cloneNode(true);
-      cloned.setAttribute('width',  svgW);
-      cloned.setAttribute('height', svgH);
-      cloned.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-
-      const svgData = new XMLSerializer().serializeToString(cloned);
-      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-      const svgUrl  = URL.createObjectURL(svgBlob);
-
-      // Draw SVG to high-DPI canvas
-      const canvas = await new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-          const scale = 3;
-          const c = document.createElement('canvas');
-          c.width  = svgW * scale;
-          c.height = svgH * scale;
-          const ctx = c.getContext('2d');
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, c.width, c.height);
-          ctx.scale(scale, scale);
-          ctx.drawImage(img, 0, 0, svgW, svgH);
-          URL.revokeObjectURL(svgUrl);
-          resolve(c);
-        };
-        img.onerror = (e) => { URL.revokeObjectURL(svgUrl); reject(e); };
-        img.src = svgUrl;
-      });
-
-      // Calculate mm per canvas pixel
-      const aspectRatio  = svgH / svgW;
-      const totalImgH_mm = usableW * aspectRatio;
-      const pxPerMm      = canvas.height / totalImgH_mm;
-
-      // Strip-slice across pages
-      let srcYpx = 0;
-
-      while (srcYpx < canvas.height) {
-        const spaceLeft_mm   = pageH - yOffset - margin;
-        const stripH_mm      = Math.min(spaceLeft_mm, pageH - margin * 2);
-        const stripH_px      = Math.round(stripH_mm * pxPerMm);
-
-        if (stripH_px <= 0) {
-          pdf.addPage();
-          yOffset = margin;
-          continue;
-        }
-
-        const actualStripH_px = Math.min(stripH_px, canvas.height - srcYpx);
-        const actualStripH_mm = actualStripH_px / pxPerMm;
-
-        // Cut strip from canvas
-        const strip = document.createElement('canvas');
-        strip.width  = canvas.width;
-        strip.height = actualStripH_px;
-        const sctx = strip.getContext('2d');
-        sctx.fillStyle = '#ffffff';
-        sctx.fillRect(0, 0, strip.width, strip.height);
-        sctx.drawImage(canvas,
-          0, srcYpx, canvas.width, actualStripH_px,
-          0, 0,      strip.width,  actualStripH_px
-        );
-
-        if (!firstPage && spaceLeft_mm < 10) {
-          pdf.addPage();
-          yOffset = margin;
-        }
-
-        pdf.addImage(strip.toDataURL('image/png'), 'PNG', margin, yOffset, usableW, actualStripH_mm);
-
-        yOffset   += actualStripH_mm + 2;
-        srcYpx    += actualStripH_px;
-        firstPage  = false;
-
-        if (srcYpx < canvas.height) {
-          pdf.addPage();
-          yOffset = margin;
-        }
-      }
-    }
-
-    pdf.save(`${filename}_sheet_music.pdf`);
-
-  } catch (err) {
-    console.error('PDF error:', err);
-    alert('PDF generation failed: ' + err.message);
-  } finally {
-    btn.textContent = '⬇ Download PDF';
-    btn.disabled = false;
-  }
-};
-
-function buildPitchTab(result) {
-  document.getElementById('pitchIdle').style.display = 'none';
-  document.getElementById('pitchBody').style.display = 'flex';
-
-  const notes      = result.note_segments || [];
-  const totalDur   = notes.reduce((s,n) => s + (n.end - n.start), 0);
-  const uniqueSet  = new Set(notes.filter(n=>!n.is_rest).map(n=>n.note));
-  const uniqueNotes= uniqueSet.size;
-  const maxDur     = Math.max(...notes.map(n => n.end - n.start), 0.001);
-  const totalTime  = notes.length ? Math.max(...notes.map(n=>n.end)) : 1;
-
-  // Stats strip
-  document.getElementById('pitchInfoStrip').innerHTML = `
-    <div class="info-box"><div class="ib-val">${notes.length}</div><div class="ib-lbl">Total Events</div></div>
-    <div class="info-box"><div class="ib-val">${uniqueNotes}</div><div class="ib-lbl">Unique Pitches</div></div>
-    <div class="info-box"><div class="ib-val">${totalDur.toFixed(1)}s</div><div class="ib-lbl">Total Duration</div></div>
-    <div class="info-box"><div class="ib-val">${notes.length ? (totalDur/notes.length).toFixed(2)+'s' : '—'}</div><div class="ib-lbl">Avg Note Len</div></div>
-  `;
-  document.getElementById('noteCount').textContent = `${notes.length} events · ${uniqueNotes} unique`;
-  document.getElementById('rollSub').textContent = `${notes.filter(n=>!n.is_rest).length} notes · ${notes.filter(n=>n.is_rest).length} rests · total ${totalDur.toFixed(1)}s`;
-
-  // ── NOTE COLOR SCHEME by pitch class ──
-  const NOTE_COLORS = {
-    'C': { bg:'rgba(0,150,255,.25)',  border:'rgba(0,150,255,.8)',  pill:'#0096FF', text:'#fff' },
-    'D': { bg:'rgba(45,212,191,.2)', border:'rgba(45,212,191,.8)', pill:'#2dd4bf', text:'#021' },
-    'E': { bg:'rgba(34,197,94,.2)',  border:'rgba(34,197,94,.8)',  pill:'#22c55e', text:'#fff' },
-    'F': { bg:'rgba(245,158,11,.2)', border:'rgba(245,158,11,.8)', pill:'#f59e0b', text:'#021' },
-    'G': { bg:'rgba(129,140,248,.25)',border:'rgba(129,140,248,.8)',pill:'#818cf8', text:'#fff' },
-    'A': { bg:'rgba(236,72,153,.2)', border:'rgba(236,72,153,.8)', pill:'#ec4899', text:'#fff' },
-    'B': { bg:'rgba(251,146,60,.2)', border:'rgba(251,146,60,.8)', pill:'#fb923c', text:'#021' },
-  };
-  function getNoteClass(noteName) {
-    if (!noteName) return NOTE_COLORS['C'];
-    const base = noteName.replace(/[#b♯♭0-9]/g,'')[0] || 'C';
-    return NOTE_COLORS[base] || NOTE_COLORS['C'];
-  }
-  function noteToMidi(noteName) {
-    if (!noteName) return 60;
-    const map = {C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11};
-    const m = noteName.match(/^([A-G][#b]?)(\d+)$/);
-    if (!m) return 60;
-    const pc = map[m[1]] ?? 0;
-    return (parseInt(m[2]) + 1) * 12 + pc;
-  }
-
-  // ── PIANO ROLL CANVAS ──
-  const noteSegments = notes.filter(n => !n.is_rest);
-  const restSegments = notes.filter(n => n.is_rest);
-
-  const midiNotes = noteSegments.map(n => noteToMidi(n.note));
-  const minMidi   = midiNotes.length ? Math.max(Math.min(...midiNotes) - 2, 21) : 48;
-  const maxMidi   = midiNotes.length ? Math.min(Math.max(...midiNotes) + 2, 108) : 84;
-  const midiRange = Math.max(maxMidi - minMidi + 1, 12);
-
-  const rollContainer = document.querySelector('.roll-scroll');
-  const canvas        = document.getElementById('rollCanvas');
-  const containerW    = rollContainer.clientWidth  || 600;
-  const ROW_H         = 22;
-  const LABEL_W       = 36;
-  const HEADER_H      = 24;
-  const canvasH       = midiRange * ROW_H + HEADER_H;
-  const canvasW       = Math.max(containerW, totalTime * 60 + LABEL_W + 20);
-
-  canvas.width  = canvasW;
-  canvas.height = canvasH;
-  const ctx = canvas.getContext('2d');
-
-  // Background
-  ctx.fillStyle = '#0d0d3a';
-  ctx.fillRect(0, 0, canvasW, canvasH);
-
-  // Piano key rows
-  const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-  for (let midi = minMidi; midi <= maxMidi; midi++) {
-    const rowIdx = maxMidi - midi;
-    const y      = HEADER_H + rowIdx * ROW_H;
-    const pc     = midi % 12;
-    const isBlack = [1,3,6,8,10].includes(pc);
-    ctx.fillStyle = isBlack ? 'rgba(255,255,255,.025)' : 'rgba(255,255,255,.045)';
-    ctx.fillRect(LABEL_W, y, canvasW - LABEL_W, ROW_H);
-    // Row separator
-    ctx.fillStyle = 'rgba(0,150,255,.08)';
-    ctx.fillRect(LABEL_W, y + ROW_H - 1, canvasW - LABEL_W, 1);
-    // Piano key label
-    const noteName = NOTE_NAMES[pc];
-    const isC = pc === 0;
-    ctx.fillStyle = isC ? '#38b6ff' : isBlack ? 'rgba(255,255,255,.2)' : 'rgba(255,255,255,.35)';
-    ctx.font = isC ? 'bold 9px JetBrains Mono, monospace' : '8px JetBrains Mono, monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText(noteName + (isC ? Math.floor(midi/12)-1 : ''), LABEL_W - 3, y + ROW_H/2 + 3.5);
-  }
-
-  // Time grid lines + header labels
-  const timeStep = totalTime > 30 ? 5 : totalTime > 15 ? 2 : 1;
-  const pxPerSec = (canvasW - LABEL_W - 10) / totalTime;
-  for (let t = 0; t <= totalTime; t += timeStep) {
-    const x = LABEL_W + t * pxPerSec;
-    ctx.fillStyle = 'rgba(0,150,255,.12)';
-    ctx.fillRect(x, HEADER_H, 1, canvasH - HEADER_H);
-    ctx.fillStyle = 'rgba(255,255,255,.3)';
-    ctx.font = '9px JetBrains Mono, monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(t + 's', x, 15);
-  }
-  // Header bar
-  ctx.fillStyle = 'rgba(7,7,46,.9)';
-  ctx.fillRect(0, 0, canvasW, HEADER_H);
-  ctx.fillStyle = 'rgba(0,150,255,.15)';
-  ctx.fillRect(0, HEADER_H - 1, canvasW, 1);
-
-  // Draw rest markers (faint)
-  restSegments.forEach(n => {
-    const x = LABEL_W + n.start * pxPerSec;
-    const w = Math.max((n.end - n.start) * pxPerSec - 2, 2);
-    const y = HEADER_H;
-    ctx.fillStyle = 'rgba(255,255,255,.04)';
-    ctx.fillRect(x, y, w, canvasH - HEADER_H);
-  });
-
-  // Draw note blocks
-  noteSegments.forEach(n => {
-    const midi   = noteToMidi(n.note);
-    if (midi < minMidi || midi > maxMidi) return;
-    const rowIdx = maxMidi - midi;
-    const y      = HEADER_H + rowIdx * ROW_H + 2;
-    const h      = ROW_H - 4;
-    const x      = LABEL_W + n.start * pxPerSec;
-    const w      = Math.max((n.end - n.start) * pxPerSec - 3, 4);
-    const col    = getNoteClass(n.note);
-
-    // Note block fill
-    ctx.fillStyle = col.bg.replace('.25','.4').replace('.2','.35');
-    ctx.beginPath();
-    ctx.roundRect ? ctx.roundRect(x, y, w, h, 3) : ctx.rect(x, y, w, h);
-    ctx.fill();
-    // Left edge accent
-    ctx.fillStyle = col.border;
-    ctx.fillRect(x, y, 3, h);
-    // Note label (if wide enough)
-    if (w > 22) {
-      ctx.fillStyle = 'rgba(255,255,255,.9)';
-      ctx.font = 'bold 9px JetBrains Mono, monospace';
-      ctx.textAlign = 'left';
-      ctx.fillText(n.note, x + 5, y + h/2 + 3.5);
-    }
-  });
-
-  // ── LEGEND ──
-  const seenClasses = new Set();
-  noteSegments.forEach(n => {
-    const base = (n.note || '').replace(/[#b♯♭0-9]/g,'')[0];
-    if (base) seenClasses.add(base);
-  });
-  const legendEl = document.getElementById('rollLegend');
-  legendEl.innerHTML = [...seenClasses].slice(0,7).map(c => {
-    const col = NOTE_COLORS[c] || NOTE_COLORS['C'];
-    return `<span style="display:flex;align-items:center;gap:4px;"><span class="rl-dot" style="background:${col.pill}"></span>${c}</span>`;
-  }).join('');
-
-  // ── NOTE CARDS ──
-  const cardsEl = document.getElementById('noteCardsBody');
-  cardsEl.innerHTML = '';
-  notes.forEach((n, i) => {
-    const dur     = n.end - n.start;
-    const barPct  = (dur / maxDur * 100).toFixed(0);
-    const col     = n.is_rest ? null : getNoteClass(n.note);
-    const noteBase = n.is_rest ? '' : (n.note || '').replace(/[0-9]/g,'');
-    const noteOct  = n.is_rest ? '' : (n.note || '').replace(/[^0-9]/g,'');
-
-    const card = document.createElement('div');
-    card.className = 'note-card' + (n.is_rest ? ' is-rest' : '');
-
-    if (n.is_rest) {
-      card.innerHTML = `
-        <span class="nc-seq">${i+1}</span>
-        <div class="nc-pill" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1);color:var(--muted);">
-          <span>—</span><span class="nc-octave">rest</span>
-        </div>
-        <div class="nc-info">
-          <div class="nc-label" style="color:var(--muted)">Rest</div>
-          <div class="nc-timing">${n.start.toFixed(2)}s → ${n.end.toFixed(2)}s</div>
-          <div class="nc-dur-wrap"><div class="nc-dur-bar" style="width:${barPct}%;background:rgba(255,255,255,.15)"></div></div>
-        </div>
-        <span class="nc-dur-val">${dur.toFixed(2)}s</span>`;
-    } else {
-      card.innerHTML = `
-        <span class="nc-seq">${i+1}</span>
-        <div class="nc-pill" style="background:${col.bg};border-color:${col.border};color:${col.pill};">
-          <span>${noteBase}</span><span class="nc-octave">${noteOct}</span>
-        </div>
-        <div class="nc-info">
-          <div class="nc-label">${n.note} <span style="font-size:10px;color:var(--muted);font-weight:400;">· ${noteNameToFull(n.note)}</span></div>
-          <div class="nc-timing">${n.start.toFixed(2)}s → ${n.end.toFixed(2)}s</div>
-          <div class="nc-dur-wrap"><div class="nc-dur-bar" style="width:${barPct}%;background:${col.pill}"></div></div>
-        </div>
-        <span class="nc-dur-val">${dur.toFixed(2)}s</span>`;
-    }
-    cardsEl.appendChild(card);
-  });
-}
-
-function noteNameToFull(note) {
-  if (!note) return '';
-  const names = {
-    C:'Do', 'C#':'Do#', Db:'Re♭', D:'Re', 'D#':'Re#', Eb:'Mi♭',
-    E:'Mi', F:'Fa', 'F#':'Fa#', Gb:'Sol♭', G:'Sol', 'G#':'Sol#',
-    Ab:'La♭', A:'La', 'A#':'La#', Bb:'Si♭', B:'Si'
-  };
-  const m = note.match(/^([A-G][#b]?)(\d+)$/);
-  if (!m) return '';
-  return (names[m[1]] || m[1]) + m[2];
-}
-
-// Restore from localStorage
-const cached = (() => { try { return JSON.parse(localStorage.getItem('monophonicAnalysis')); } catch { return null; } })();
-if (cached && cached.note_segments) {
-  analysisResult = cached;
-  for (let i=1; i<=6; i++) { const el = document.getElementById('st'+i); el.classList.add('done'); }
-  document.getElementById('idleState').style.display = 'none';
-  renderResults(cached);
-}
-</script>
+<script src="js/monophonic.js"></script>
 </body>
 </html>

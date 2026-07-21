@@ -6,10 +6,7 @@ import pretty_midi
 import numpy as np
 
 def transcribe_drums(audio_path: str, output_dir: str):
-    """
-    Simple drum transcription using onset detection.
-    Creates MIDI percussion track.
-    """
+  
 
     audio_path = Path(audio_path)
     output_dir = Path(output_dir)
@@ -33,16 +30,16 @@ def transcribe_drums(audio_path: str, output_dir: str):
 
     print(f"[DRUM] Detected {len(onset_times)} drum hits")
 
-    # Create MIDI object
+    
     midi = pretty_midi.PrettyMIDI()
 
-    # Channel 9 = percussion (MIDI standard)
+   
     drum_instrument = pretty_midi.Instrument(
         program=0,
         is_drum=True
     )
 
-    # Map all hits to snare (you can improve later)
+    
     for onset in onset_times:
         note = pretty_midi.Note(
             velocity=100,

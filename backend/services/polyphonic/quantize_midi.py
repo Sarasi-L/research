@@ -6,13 +6,7 @@ from pathlib import Path
 
 
 def build_tempo_grid(tempo_bpm: float, total_duration: float, subdivision: int = 8):
-    """
-    Build a perfectly uniform quantization grid based on detected tempo.
-    This replaces the librosa beat-time grid which has irregular intervals.
-
-    subdivision=4 → 16th notes (quarter / 4)
-    subdivision=2 → 8th notes  (quarter / 2)
-    """
+    
     seconds_per_beat = 60.0 / tempo_bpm
     seconds_per_subdivision = seconds_per_beat / subdivision
 
@@ -27,25 +21,20 @@ def find_nearest_grid(time: float, grid: np.ndarray) -> float:
 
 def quantize_to_grid(input_midi: str, beat_times: np.ndarray, output_path: str,
                      subdivision: int = 8, tempo_bpm: float = None):
-    """
-    Quantize all MIDI note start/end times to a uniform grid.
-
-    If tempo_bpm is provided, builds a mathematically perfect grid from tempo.
-    Falls back to beat_times grid if tempo_bpm is None (legacy behaviour).
-    """
+    
 
     midi = pretty_midi.PrettyMIDI(input_midi)
 
-    # Total MIDI duration for grid extent
+    
     total_duration = midi.get_end_time() + 2.0  # +2s padding
 
     if tempo_bpm is not None:
-        # ✅ CORRECT: Perfect uniform grid from tempo
+        
         grid = build_tempo_grid(tempo_bpm, total_duration, subdivision)
         print(f"[QUANTIZE] Using tempo-based grid: {tempo_bpm:.2f} BPM, "
               f"subdivision={subdivision}, step={60.0/tempo_bpm/subdivision:.4f}s")
     else:
-        # Legacy: irregular librosa beat grid (avoid if possible)
+        
         from backend.services.polyphonic.quantize_midi import _build_beat_grid
         grid = _build_beat_grid(beat_times, subdivision)
         print(f"[QUANTIZE] WARNING: Using irregular beat-time grid (tempo_bpm not provided)")
@@ -74,7 +63,7 @@ def quantize_to_grid(input_midi: str, beat_times: np.ndarray, output_path: str,
 
 
 def _build_beat_grid(beat_times: np.ndarray, subdivision: int) -> np.ndarray:
-    """Legacy irregular beat grid — kept for fallback only."""
+    
     grid = []
     for i in range(len(beat_times) - 1):
         start = beat_times[i]

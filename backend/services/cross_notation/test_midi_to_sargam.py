@@ -4,18 +4,14 @@ import pretty_midi
 import os
 import sys
 
-# Add parent directories to path to import midi_to_sargam
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from cross_notation.midi_to_sargam import midi_to_sargam, sargam_string
 
 def test_midi_to_sargam_mapping():
-    """
-    Test if MIDI pitch classes are correctly mapped to Sargam notes
-    """
-    
-    # Expected mappings
+   
     EXPECTED_MAP = {
         0: "Sa",   # C
         2: "Re",   # D
@@ -30,11 +26,11 @@ def test_midi_to_sargam_mapping():
     print("MIDI TO SARGAM MAPPING TEST")
     print("="*60)
     
-    # Create test MIDI
+
     midi = pretty_midi.PrettyMIDI()
     instrument = pretty_midi.Instrument(program=0)
     
-    # Add one note for each pitch class (C4 to B4)
+
     test_pitches = {
         60: "Sa",   # C4
         62: "Re",   # D4
@@ -76,7 +72,7 @@ def test_midi_to_sargam_mapping():
     for i, (pitch, expected) in enumerate(test_pitches.items()):
         actual = sargam_notes[i]['note']
         pitch_class = pitch % 12
-        status = "✓" if actual == expected else "✗"
+        status = "okay" if actual == expected else "no"
         
         print(f"{status} Pitch {pitch} (class {pitch_class:2d}) -> "
               f"Expected: {expected:4s} | Got: {actual:4s}")
@@ -103,7 +99,7 @@ def test_midi_to_sargam_mapping():
     midi_chromatic.instruments.append(inst_chromatic)
     chromatic_file = "test_chromatic.mid"
     midi_chromatic.write(chromatic_file)
-    print(f"✓ Created chromatic test MIDI file: {os.path.abspath(chromatic_file)}")
+    print(f" Created chromatic test MIDI file: {os.path.abspath(chromatic_file)}")
     
     chromatic_sargam = midi_to_sargam(chromatic_file)
     
@@ -116,7 +112,7 @@ def test_midi_to_sargam_mapping():
         if sargam:
             print(f"Pitch class {pitch_class:2d}: {sargam}")
         else:
-            print(f"Pitch class {pitch_class:2d}: ⚠️  NOT MAPPED (chromatic note)")
+            print(f"Pitch class {pitch_class:2d}:   NOT MAPPED (chromatic note)")
     
     return sargam_text == "Sa Re Ga Ma Pa Dha Ni"
 
@@ -141,7 +137,7 @@ def analyze_midi_sargam_coverage(midi_path):
     print("="*60)
     
     if not os.path.exists(abs_path):
-        print(f"\n⚠️  File not found: {abs_path}")
+        print(f"\n  File not found: {abs_path}")
         print("\nSearching for MIDI files in common locations...")
         
         # Search in common directories
@@ -211,7 +207,7 @@ def analyze_midi_sargam_coverage(midi_path):
             sargam = SARGAM_MAP.get(pc, "—")
             note_name = pretty_midi.note_number_to_name(60 + pc)[:-1]  # Remove octave
             
-            status = "✓" if pc in SARGAM_MAP else "⚠️ "
+            status = "okay" if pc in SARGAM_MAP else "no "
             
             print(f"{status} Pitch class {pc:2d} ({note_name:3s}): "
                   f"{count:4d} notes -> Sargam: {sargam:4s}")
@@ -272,7 +268,7 @@ def verify_sargam_timing(midi_path):
         abs_path = midi_path
     
     if not os.path.exists(abs_path):
-        print(f"\n⚠️  File not found for timing verification: {abs_path}")
+        print(f"\n  File not found for timing verification: {abs_path}")
         return
     
     print("\n" + "="*60)
@@ -368,7 +364,7 @@ if __name__ == "__main__":
             break
     
     if not analyzed:
-        print("\n⚠️  Could not find normalized.mid file")
+        print("\n  Could not find normalized.mid file")
         print("\nTo generate the file, run:")
         print("  1. Upload an audio file through the web interface")
         print("  2. Run the polyphonic analysis pipeline")

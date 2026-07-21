@@ -24,10 +24,7 @@ TUPLE_TOLERANCE = 0.15  # 15% deviation from grid suggests tuplet
 
 
 def nearest_duration(value_in_seconds: float, beat_duration_seconds: float) -> tuple:
-    """
-    Find nearest standard duration.
-    Returns (snapped_duration, is_tuplet)
-    """
+    
     duration_in_beats = value_in_seconds / beat_duration_seconds
     
     # Find closest grid value
@@ -46,10 +43,7 @@ def nearest_duration(value_in_seconds: float, beat_duration_seconds: float) -> t
 
 
 def normalize_note_durations(input_midi: str, output_midi: str, tempo_bpm: float = None):
-    """
-    Normalize note durations to standard grid WITHOUT destroying note values.
-    Preserves tuplets and non-standard durations.
-    """
+    
     print("\n[NORMALIZE] ===== Normalizing Note Durations =====")
     
     midi = pretty_midi.PrettyMIDI(input_midi)

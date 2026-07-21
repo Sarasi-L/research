@@ -26,13 +26,17 @@ from services.monophonic.western_notation.measure_grouping import group_notes_in
 from services.monophonic.western_notation.ties_rests import apply_ties_and_rests
 from services.monophonic.western_notation.musicxml_export import generate_musicxml
 
+from services.monophonic.sargam_converter import convert_xml_to_sargam
+
+from services.monophonic.direct_midi_export import create_midi_from_quantized_notes
+
 # Instrument detection
 from services.hybrid_detect_type import detect_type
 from services.detect_monophonic_instrument import detect_single_instrument
 from services.detect_instruments import detect_all_instruments
 from services.polyphonic.separate_demucs import separate_polyphonic
 
-# Piano detection + pipeline
+
 from services.polyphonic.detect_piano_from_stems import detect_piano_from_stems
 from services.polyphonic.run_piano_pipeline import run_piano_pipeline
 
@@ -106,7 +110,16 @@ async def analyze_monophonic(filename: str):
             quantized_notes, f"{key_result['key']} {key_result['mode']}"
         )
 
-        # ✅ Normalize note field for frontend display
+        
+        direct_midi_file = MUSICXML_DIR / f"{filename}_direct.mid"
+
+        create_midi_from_quantized_notes(
+            notes=named_notes,
+            tempo_bpm=final_tempo["tempo"],
+            output_file=str(direct_midi_file)
+        )
+
+        # Normalize note field for frontend display
         for n in named_notes:
             if n.get("is_rest", False):
                 n["note"] = "Rest"
@@ -130,16 +143,30 @@ async def analyze_monophonic(filename: str):
             output_file=str(musicxml_file)
         )
 
+        # Convert MusicXML to Sargam
+        sargam_output = convert_xml_to_sargam(
+            xml_path=str(musicxml_file),
+            key=key_result["key"],
+            beats_per_measure=beats_per_measure
+        )
+
+        print("\n[SARGAM OUTPUT]")
+        print(sargam_output["sargam_text"])
+
         return JSONResponse({
             "instrument": instrument_data,
             "tempo": final_tempo,
             "key": key_result,
             "beats_per_measure": beats_per_measure,
             "musicxml_file": f"/musicxml/{musicxml_file.name}",
+            "midi_direct": f"/musicxml/{direct_midi_file.name}",
 
-            # 🔽 ADD THESE TWO LINES
+
+            
             "pitch_curve": pitch_result["pitch_points"],
-            "note_segments": named_notes
+            "note_segments": named_notes,
+
+            "sargam_notation": sargam_output["sargam_text"]
         })
 
 
@@ -153,29 +180,22 @@ async def analyze_polyphonic(filename: str):
     try:
         file_path = UPLOAD_DIR / filename
 
-        # --------------------------------
+       
         # STEP 1 — Demucs separation
-        # --------------------------------
         stem_paths = separate_polyphonic(
             str(file_path),
             output_dir=str(STEMS_DIR)
         )
 
-        # --------------------------------
         # STEP 2 — Instrument detection
-        # --------------------------------
         instruments = detect_all_instruments(stem_paths)
 
-        # --------------------------------
-        # STEP 3 — Detect piano-only
-        # --------------------------------
+       
         piano_only = detect_piano_from_stems(stem_paths)
 
         musicxml_file = None
 
-        # --------------------------------
-        # STEP 4 — RUN PIPELINE
-        # --------------------------------
+        
 
         if piano_only:
 
@@ -197,8 +217,8 @@ async def analyze_polyphonic(filename: str):
 
         musicxml_file = f"/musicxml/{Path(pipeline_result['xml']).name}"
         
-        # ✅ ALWAYS USE normalized.mid from poly_work
-        midi_file = "/midi/normalized"  # This will hit the dedicated endpoint
+        
+        midi_file = "/midi/normalized"  
         
         sargam = pipeline_result["sargam"]
 
@@ -206,9 +226,8 @@ async def analyze_polyphonic(filename: str):
         print(f"   MusicXML: {musicxml_file}")
         print(f"   MIDI: {midi_file} (normalized.mid)")
 
-        # --------------------------------
+
         # STEP 5 — Return result
-        # --------------------------------
         return JSONResponse({
             "piano_only": piano_only,
             "stems": {
@@ -226,7 +245,7 @@ async def analyze_polyphonic(filename: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ✅ Universal file server for musicxml directory and subdirectories
+# Universal file server for musicxml directory and subdirectories
 @router.get("/musicxml/{path:path}")
 async def serve_musicxml_files(path: str):
     """

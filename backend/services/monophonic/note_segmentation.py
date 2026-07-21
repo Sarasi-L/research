@@ -27,7 +27,11 @@ def frames_to_notes(
     min_note_duration=0.08
 ):
     """
-    Convert CREPE pitch frames to raw musical note events
+    Convert CREPE pitch frames to raw musical note events.
+
+    FIX: Instead of exponential smoothing (which drifts pitch over time),
+    we now collect all frames belonging to a note and take the median
+    at note-end. This gives a stable, accurate pitch per note.
 
     Returns:
     [
@@ -35,71 +39,78 @@ def frames_to_notes(
     ]
     """
 
-    # Instrument-aware pitch limits
     min_pitch, max_pitch = (0, float("inf"))
     if instrument and instrument in INSTRUMENT_PITCH_RANGES:
         min_pitch, max_pitch = INSTRUMENT_PITCH_RANGES[instrument]
 
     notes = []
     current_start = None
-    current_pitch = None
+    current_frames = []   # FIX: collect frames instead of running average
 
     for i in range(len(freq)):
 
         # Frame is voiced & valid
-        voiced = conf[i] >= conf_thresh and not np.isnan(freq[i])
+        voiced = (
+            conf[i] >= conf_thresh
+            and freq[i] is not None
+            and not np.isnan(freq[i])
+        )
         if voiced and not (min_pitch <= freq[i] <= max_pitch):
             voiced = False
 
         # ---------------- End note ----------------
         if not voiced:
-            if current_start is not None:
+            if current_start is not None and len(current_frames) > 0:
                 end_time = time[i]
                 if end_time - current_start >= min_note_duration:
+                    # FIX: median of all frames → accurate, outlier-resistant pitch
+                    stable_pitch = float(np.median(current_frames))
                     notes.append({
                         "start": round(current_start, 3),
                         "end": round(end_time, 3),
-                        "pitch": round(current_pitch, 2)
+                        "pitch": round(stable_pitch, 2)
                     })
                 current_start = None
-                current_pitch = None
+                current_frames = []
             continue
 
         # ---------------- Start note ----------------
         if current_start is None:
             current_start = time[i]
-            current_pitch = freq[i]
+            current_frames = [freq[i]]
             continue
 
         # ---------------- Pitch change → new note ----------------
-        if abs(freq[i] - current_pitch) > pitch_change_thresh:
+        # FIX: compare against median of current note, not drifted running avg
+        current_median = float(np.median(current_frames))
+        if abs(freq[i] - current_median) > pitch_change_thresh:
             end_time = time[i]
             if end_time - current_start >= min_note_duration:
+                stable_pitch = float(np.median(current_frames))
                 notes.append({
                     "start": round(current_start, 3),
                     "end": round(end_time, 3),
-                    "pitch": round(current_pitch, 2)
+                    "pitch": round(stable_pitch, 2)
                 })
             current_start = time[i]
-            current_pitch = freq[i]
-
+            current_frames = [freq[i]]
         else:
-            # Smooth pitch tracking
-            current_pitch = 0.9 * current_pitch + 0.1 * freq[i]
+            current_frames.append(freq[i])
 
     # Close final note
-    if current_start is not None:
+    if current_start is not None and len(current_frames) > 0:
+        stable_pitch = float(np.median(current_frames))
         notes.append({
             "start": round(current_start, 3),
             "end": round(time[-1], 3),
-            "pitch": round(current_pitch, 2)
+            "pitch": round(stable_pitch, 2)
         })
 
     return notes
 
 
 # -------------------------------------------------
-# NOTE DURATION SMOOTHING  (CRITICAL FIX)
+# NOTE DURATION SMOOTHING
 # -------------------------------------------------
 def smooth_note_durations(notes, min_duration=0.15):
     """
@@ -119,12 +130,13 @@ def smooth_note_durations(notes, min_duration=0.15):
     for n in notes[1:]:
         current_dur = current["end"] - current["start"]
 
-        # If current note is too short → merge
         if current_dur < min_duration:
+            # Extend end time and use pitch of the longer note
             current["end"] = n["end"]
-            current["pitch"] = (
-                0.7 * current["pitch"] + 0.3 * n["pitch"]
-            )
+            # FIX: don't blend pitches — keep the dominant (longer) note's pitch
+            # The merged note inherits the next note's pitch since
+            # the current one was too short to be reliable
+            current["pitch"] = n["pitch"]
         else:
             smoothed.append(current)
             current = n.copy()

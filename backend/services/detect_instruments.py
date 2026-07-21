@@ -1,10 +1,4 @@
 # backend/services/detect_instruments.py
-"""
-Advanced instrument detection using ensemble of models:
-1. YAMNet (Google's pre-trained AudioSet model) - Primary
-2. Rule-based spectral analysis - Fallback
-3. Ensemble voting for final prediction
-"""
 
 from typing import List, Dict
 from pathlib import Path
@@ -17,7 +11,7 @@ from services.models.ensemble_detector import EnsembleDetector
 _ensemble_detector = None
 
 def get_ensemble_detector():
-    """Get or create the ensemble detector"""
+    
     global _ensemble_detector
     
     if _ensemble_detector is None:
@@ -25,31 +19,28 @@ def get_ensemble_detector():
         
         _ensemble_detector = EnsembleDetector()
         
-        # Try to add YAMNet (primary detector)
         try:
-            # Check if YAMNet model exists locally
             yamnet_path = Path(__file__).parent.parent / "models" / "yamnet"
             
             if yamnet_path.exists():
                 yamnet = YAMNetDetector(model_path=str(yamnet_path))
-                _ensemble_detector.add_detector(yamnet, weight=1.2)  # Higher weight for YAMNet
-                print("[INFO] ✓ YAMNet detector loaded (local model)")
+                _ensemble_detector.add_detector(yamnet, weight=1.2)  
+                print("[INFO] YAMNet detector loaded (local model)")
             else:
                 print("[WARNING] YAMNet model not found locally")
                 print("[INFO] Run 'python save_yamnet.py' to download YAMNet model")
                 yamnet = YAMNetDetector()  # Load from TF Hub
                 _ensemble_detector.add_detector(yamnet, weight=1.2)
-                print("[INFO] ✓ YAMNet detector loaded (from TF Hub)")
+                print("[INFO] YAMNet detector loaded (from TF Hub)")
                 
         except Exception as e:
             print(f"[WARNING] Could not load YAMNet: {e}")
             print("[INFO] Continuing with Rule-Based detector only")
         
-        # Add rule-based detector (fallback)
         try:
             rule_based = RuleBasedDetector()
             _ensemble_detector.add_detector(rule_based, weight=1.0)
-            print("[INFO] ✓ Rule-based detector loaded")
+            print("[INFO] Rule-based detector loaded")
         except Exception as e:
             print(f"[ERROR] Could not load rule-based detector: {e}")
         
@@ -59,26 +50,15 @@ def get_ensemble_detector():
 
 
 class InstrumentDetector:
-    """Main instrument detector interface"""
     
     def __init__(self):
         self.ensemble = get_ensemble_detector()
     
     def detect_instruments_in_stem(self, audio_path: str, stem_name: str) -> List[Dict]:
-        """
-        Detect instruments in a specific stem
         
-        Args:
-            audio_path: Path to audio file
-            stem_name: Name of stem (drums, bass, vocals, other)
-            
-        Returns:
-            List of detected instruments
-        """
         print(f"[INFO] Analyzing {stem_name} stem for instruments...")
         
         if stem_name == "other":
-            # Use ensemble for complex "other" stem (melodic instruments)
             return self._detect_melodic_instruments(audio_path)
         elif stem_name == "drums":
             return self._analyze_drums(audio_path)
@@ -90,30 +70,24 @@ class InstrumentDetector:
             return [{'instrument': stem_name, 'confidence': 0.5, 'category': 'unknown'}]
     
     def _detect_melodic_instruments(self, audio_path: str) -> List[Dict]:
-        """
-        Detect instruments in 'other' stem using ensemble
-        Strategy: YAMNet first, Rule-Based as fallback
-        """
+        
         print("[INFO] Running ensemble detection on 'other' stem...")
         
         # Run ensemble detection (both YAMNet and Rule-Based)
         instruments = self.ensemble.detect_instruments(audio_path)
         
-        # Filter out vocals, drums, bass (should be in other stems)
         filtered = []
         exclude_keywords = ['vocal', 'drum', 'bass', 'singing', 'speech', 'voice']
         
         for inst in instruments:
             instrument_name = inst['instrument'].lower()
             
-            # Skip if it's a vocal/drum/bass instrument
             if any(keyword in instrument_name for keyword in exclude_keywords):
                 print(f"[INFO] Filtered out '{inst['instrument']}' (should be in different stem)")
                 continue
             
             filtered.append(inst)
         
-        # If nothing detected, return generic placeholder
         if not filtered:
             print("[INFO] No specific instruments detected, using generic placeholder")
             filtered.append({
@@ -125,7 +99,7 @@ class InstrumentDetector:
                 'detectors_agreed': 0
             })
         
-        # Limit to top 5 most confident
+        
         filtered.sort(key=lambda x: x['confidence'], reverse=True)
         return filtered[:5]
     
@@ -165,15 +139,7 @@ class InstrumentDetector:
 
 
 def detect_all_instruments(stem_paths: Dict[str, str]) -> Dict[str, List[Dict]]:
-    """
-    Detect instruments in all stems
-    
-    Args:
-        stem_paths: Dictionary mapping stem names to file paths
-        
-    Returns:
-        Dictionary mapping stem names to detected instruments
-    """
+   
     detector = InstrumentDetector()
     all_instruments = {}
     

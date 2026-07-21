@@ -4,12 +4,7 @@ import librosa
 import numpy as np
 
 def detect_beats(audio_path: str):
-    """
-    Detect tempo + beat grid positions using librosa.
-    Returns:
-        tempo (float)
-        beat_times (numpy array)
-    """
+    
     print("\n[BEAT] ===== Tempo + Beat Tracking =====")
     print(f"[BEAT] Loading audio: {audio_path}")
 
@@ -18,7 +13,7 @@ def detect_beats(audio_path: str):
     print("[BEAT] Detecting tempo...")
     tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr)
 
-    # 🔧 FIX: Ensure tempo is float
+    
     if isinstance(tempo, np.ndarray):
         tempo = float(tempo[0])
 

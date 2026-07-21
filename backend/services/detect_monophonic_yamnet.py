@@ -2,15 +2,10 @@
 
 from services.models.yamnet_detector import YAMNetDetector
 
-# Load YAMNet ONCE (important for speed)
 yamnet = YAMNetDetector(model_path="../models/yamnet")
 
-
 def detect_monophonic_instrument(audio_path: str) -> dict:
-    """
-    Identify instrument in MONOPHONIC audio using YAMNet
-    """
-
+    
     results = yamnet.detect_instruments(audio_path)
 
     if not results:

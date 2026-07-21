@@ -1,9 +1,4 @@
 # backend/services/detect_type_crnn.py
-"""
-CRNN-based Monophonic vs Polyphonic Audio Classifier
-Replaces rule-based + CREPE detector
-Matches training & inference specification exactly
-"""
 
 import torch
 import torch.nn as nn
@@ -11,15 +6,11 @@ import librosa
 import numpy as np
 from pathlib import Path
 
-# ============================================================
-# CONFIG (MATCH TRAINING)
-# ============================================================
-
 BASE_DIR = Path(__file__).resolve().parents[2]  
 MODEL_PATH = BASE_DIR / "models" / "MonoPoly" / "mono_poly_crnn.pth"
 
 SR = 16000
-MAX_DURATION_SEC = 60.0   # ✅ process up to 60 seconds
+MAX_DURATION_SEC = 60.0
 
 WINDOW_SEC = 3.0
 HOP_SEC = 1.5
@@ -27,21 +18,16 @@ HOP_SEC = 1.5
 N_MELS = 128
 N_FFT = 1024
 HOP_LENGTH = 512
-EXPECTED_FRAMES = 128
+EXPECTED_FRAMES = 128 # Fixed input shape for model
 
 POLY_THRESHOLD = 0.4
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-
-# ============================================================
-# MODEL DEFINITION (EXACT MATCH)
-# ============================================================
-
 class CRNN(nn.Module):
     def __init__(self):
         super().__init__()
-        self.cnn = nn.Sequential(
+        self.cnn = nn.Sequential( # Extracts spatial features from spectrogram
             nn.Conv2d(1, 32, 3, padding=1),
             nn.BatchNorm2d(32),
             nn.ReLU(),
@@ -53,7 +39,7 @@ class CRNN(nn.Module):
             nn.MaxPool2d((2, 2))
         )
 
-        self.gru = nn.GRU(
+        self.gru = nn.GRU( # Captures time sequence patterns
             input_size=64 * 32,
             hidden_size=128,
             batch_first=True,
@@ -63,17 +49,13 @@ class CRNN(nn.Module):
         self.fc = nn.Linear(256, 2)
 
     def forward(self, x):
-        x = self.cnn(x)               # (B, C, F, T)
-        x = x.permute(0, 3, 1, 2)     # (B, T, C, F)
-        x = x.flatten(2)              # (B, T, C*F)
+        x = self.cnn(x)               
+        x = x.permute(0, 3, 1, 2)     
+        x = x.flatten(2)              
         x, _ = self.gru(x)
         x = x.mean(dim=1)
         return self.fc(x)
 
-
-# ============================================================
-# LOAD MODEL (ONCE)
-# ============================================================
 
 if not MODEL_PATH.exists():
     raise FileNotFoundError(f"❌ CRNN model not found: {MODEL_PATH}")
@@ -83,18 +65,8 @@ _model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
 _model.eval()
 
 
-# ============================================================
-# PUBLIC API
-# ============================================================
-
 def detect_type(audio_path: str) -> tuple:
-    """
-    Detect if audio is monophonic or polyphonic using CRNN
-
-    Returns:
-        (type_string, confidence)
-    """
-
+   
     try:
         y, _ = librosa.load(
             audio_path,
@@ -122,7 +94,7 @@ def detect_type(audio_path: str) -> tuple:
         mean_prob = float(probs.mean())
         poly_ratio = float(np.mean(probs > 0.5))
 
-        # ✅ Same decision logic as your test script
+    
         label = "polyphonic" if mean_prob >= POLY_THRESHOLD else "monophonic"
         confidence = mean_prob if label == "polyphonic" else 1.0 - mean_prob
 
@@ -133,9 +105,6 @@ def detect_type(audio_path: str) -> tuple:
         return "polyphonic", 0.6
 
 
-# ============================================================
-# UTILITIES
-# ============================================================
 
 def _audio_to_chunks(y):
     win = int(SR * WINDOW_SEC)
@@ -147,10 +116,7 @@ def _audio_to_chunks(y):
 
 
 def _preprocess_chunk(y):
-    """
-    MUST MATCH TRAINING PREPROCESSING
-    """
-
+    
     mel = librosa.feature.melspectrogram(
         y=y,
         sr=SR,
@@ -162,7 +128,7 @@ def _preprocess_chunk(y):
 
     mel = librosa.power_to_db(mel, ref=np.max)
 
-    # ✅ normalization (same as training)
+    # normalization (same as training)
     mel = (mel - mel.mean()) / (mel.std() + 1e-6)
 
     # Pad / trim to fixed time dimension

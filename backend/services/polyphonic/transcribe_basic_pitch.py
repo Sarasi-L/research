@@ -8,25 +8,20 @@ import numpy as np
 
 
 MIN_NOTE_DURATION = 0.04  
-MERGE_THRESHOLD = 0.05    # 50ms gap threshold for duplicate merging
+MERGE_THRESHOLD = 0.05    
 
 
 def clean_notes(note_events):
-    """
-    Apply:
-    1. Remove very short noisy notes
-    2. Merge duplicate close notes
-    3. Smooth velocities
-    """
+    
 
     cleaned = []
 
-    # Sort by start time safely
+    
     note_events = sorted(note_events, key=lambda x: x[0])
 
     for note in note_events:
 
-        # ✔ Handle different BasicPitch output formats
+        # Handle different BasicPitch output formats
         if len(note) == 4:
             start, end, pitch, amplitude = note
         elif len(note) >= 5:
@@ -79,9 +74,7 @@ def clean_notes(note_events):
 
 
 def build_clean_midi(cleaned_notes):
-    """
-    Build PrettyMIDI from cleaned notes
-    """
+   
 
     midi = pretty_midi.PrettyMIDI()
     instrument = pretty_midi.Instrument(program=0)
@@ -101,11 +94,7 @@ def build_clean_midi(cleaned_notes):
 
 
 def transcribe_stem(audio_path: str, output_dir: str):
-    """
-    Transcribe a single stem using Basic Pitch.
-    Applies post-processing cleanup.
-    Returns path to generated cleaned MIDI file.
-    """
+  
 
     audio_path = Path(audio_path)
     output_dir = Path(output_dir)
@@ -124,12 +113,12 @@ def transcribe_stem(audio_path: str, output_dir: str):
 
     print(f"[BP] Raw detected notes: {len(note_events)}")
 
-    # ✔ Apply post-processing
+    # Apply post-processing
     cleaned_notes = clean_notes(note_events)
 
     print(f"[BP] Cleaned notes count: {len(cleaned_notes)}")
 
-    # ✔ Build cleaned MIDI
+    # Build cleaned MIDI
     cleaned_midi = build_clean_midi(cleaned_notes)
 
     cleaned_midi.write(str(midi_output_path))

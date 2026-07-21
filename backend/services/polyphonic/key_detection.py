@@ -20,10 +20,7 @@ KEY_NAMES = [
 ]
 
 def detect_key(midi_path: str):
-    """
-    Detect key signature using Krumhansl–Schmuckler algorithm.
-    Works with multi-track polyphonic MIDI.
-    """
+   
     print(f"\n[KEY] ===== Detecting key signature: {midi_path} =====")
 
     midi = pretty_midi.PrettyMIDI(midi_path)

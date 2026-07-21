@@ -1,28 +1,14 @@
 # backend/services/detect_monophonic_instrument.py
-"""
-Detect instrument in monophonic audio using YAMNet
-Only runs after CREPE confirms it's monophonic
-"""
 
 from services.models.yamnet_detector import YAMNetDetector
 
 def detect_single_instrument(audio_path: str) -> dict:
-    """
-    Use YAMNet to identify the instrument in monophonic audio
     
-    Args:
-        audio_path: Path to the monophonic audio file
-        
-    Returns:
-        dict with instrument details from YAMNet
-    """
     print("[INFO] Running YAMNet for monophonic instrument detection...")
     
     try:
-        # Initialize YAMNet detector
         detector = YAMNetDetector(confidence_threshold=0.001)
         
-        # Detect instruments using YAMNet in MONOPHONIC MODE
         detections = detector.detect_instruments(audio_path, monophonic_mode=True)
         
         if not detections:
@@ -36,7 +22,7 @@ def detect_single_instrument(audio_path: str) -> dict:
                 "characteristics": "Could not identify specific instrument"
             }
         
-        # Get the top detection
+
         top_instrument = detections[0]
         
         print(f"[INFO] YAMNet detected: {top_instrument['instrument']} "
@@ -46,14 +32,14 @@ def detect_single_instrument(audio_path: str) -> dict:
               f"Mean: {top_instrument['mean_confidence']:.3f}")
         print(f"[DEBUG] Segments detected: {top_instrument['segments_detected']}/{top_instrument['total_segments']}")
         
-        # Add characteristics based on instrument type
+       
         characteristics = _get_instrument_characteristics(top_instrument['instrument'])
         top_instrument['characteristics'] = characteristics
         
-        # If confidence is very low, warn user
+        
         if top_instrument['confidence'] < 0.15:
             top_instrument['characteristics'] = (
-                "⚠️ Low confidence detection. " + characteristics
+                " Low confidence detection. " + characteristics
             )
         
         return top_instrument
@@ -74,9 +60,7 @@ def detect_single_instrument(audio_path: str) -> dict:
 
 
 def _get_instrument_characteristics(instrument: str) -> str:
-    """
-    Get human-readable characteristics for each instrument
-    """
+   
     characteristics = {
         # Strings
         'guitar': 'String instrument with frets, typically 6 strings',
